@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import ConversationPage from "@/pages/ConversationPage";
 import ConversationManagementPage from "@/pages/ConversationManagementPage";
 import AboutPage from "./pages/AboutPage";
-import ConversationPageMock from "./pages/ConversationPageMock";
 
 function App() {
 	return (
@@ -32,7 +31,6 @@ function App() {
 						<Route path="/about" element={<AboutPage/>}/>
 						<Route path="/conversation/:conversationId" element={<ConversationPage/>}/>
 						<Route path="/manage-conversations" element={<ConversationManagementPage/>}/>
-						<Route path="/mock" element={<ConversationPageMock/>}/>
 					</Routes>
 				</main>
 			</div>
