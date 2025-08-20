@@ -32,7 +32,10 @@ public class DataSpecificationServiceTests
 			.ReturnsAsync(dsvContent);
 
 		// Use an instance of RdfProcessor to process the DSV content.
-		IRdfProcessor rdfProcessor = new RdfProcessor();
+		IRdfProcessor rdfProcessor = new RdfProcessor(LoggerFactory
+			.Create(c => c.AddConsole().SetMinimumLevel(LogLevel.Trace))
+			.CreateLogger<RdfProcessor>()
+		);
 
 		// Use in-memory database.
 		var dbOptions = new DbContextOptionsBuilder<AppDbContext>()
