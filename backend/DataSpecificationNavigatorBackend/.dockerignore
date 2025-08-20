@@ -1,0 +1,6 @@
+.vs
+bin/
+obj/
+.gitignore
+appsettings.Development.json
+*.sln
