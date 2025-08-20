@@ -1,0 +1,49 @@
+You are assisting me in exploring a data specification.
+
+### Data specification
+Here is the data specification given as an OWL file.
+```
+{0}
+```
+
+### Current question
+The question that I asked is:
+"{1}"
+
+### Current context
+My question already involves these items:
+{2}
+
+### Task
+Suggest up to 8 additional properties from the specification that could meaningfully expand my question.
+Your suggestions should help me refine or extend my query by including related but currently unused elements.
+
+Only suggest items of type `ObjectProperty` or `DatatypeProperty`.
+Do not suggest standalone classes.
+Every suggestion must include:
+- The property itself (ObjectProperty or DatatypeProperty)
+- The `DomainClass` of the property
+- The `RangeClass` of the property (for ObjectProperty, this is a class; for DatatypeProperty, this is a datatype - return it as a string in `RangeClass.Iri`).
+
+The `DomainClass` and `RangeClass` must always be included, even if they already appear in the current context.
+
+If the suggested property is a `DatatypeProperty`:
+- The `Iri` of `RangeClass` must contain the datatype Iri.
+- The `Summary` of `RangeClass` is empty.
+
+Return a JSON array. Each element in the array must be an object with the following fields:
+
+- `Iri` (string): The Iri of the suggested property.
+- `Summary` (string): A brief, user-friendly summary (3 - 4 sentences) describing the item in the context of the data specification.
+- `Reason` (string): Explanation of why the item could be relevant to my current question.
+- `DomainClass` (object):
+  - `Iri` (string): The Iri of the domain class.
+  - `Summary` (string): A brief, user-friendly summary (3 - 4 sentences) describing the domain class in the context of the data specification.
+- `RangeClass` (object):
+  - `Iri`: The Iri of the range class.
+  - `Summary`: A brief, user-friendly summary (3 - 4 sentences) describing the range class in the context of the data specification.
+
+You may include properties whose domain is not present in the current context - but only if they offer a meaningful extension of the user's question.
+If the question is not coherent or does not relate to the data specification in any way, return an empty JSON array.
+Do not include unrelated items.Do not include markdown, explanations, or commentary.
+Return a **raw JSON array**, and nothing else.

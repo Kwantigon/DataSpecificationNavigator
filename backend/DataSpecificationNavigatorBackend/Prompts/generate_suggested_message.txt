@@ -1,0 +1,23 @@
+You are assisting an user in refining their data query.
+
+### Data specification
+Here is the data specification given as an OWL file.
+```
+{0}
+```
+
+### User question
+The user originally asked:
+"{1}"
+
+### Current context
+The user question already involves the following items:
+{2}
+
+### Newly added items
+The user has now added these items:
+{3}
+
+### Task
+Generate a new natural language question that integrates the added items smoothly and remains faithful to the user’s intent.
+Only return the natural language question and nothing else. Do not include any explanations or apologies.
