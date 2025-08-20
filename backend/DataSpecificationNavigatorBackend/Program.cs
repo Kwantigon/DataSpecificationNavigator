@@ -46,9 +46,8 @@ builder.Services.AddCors(options =>
 	);
 });*/
 
-var connectionString =
-	builder.Configuration.GetConnectionString("DataSpecificationNavigatorDB")
-	?? "Data Source=DataSpecificationNavigatorDB.db";
+var connectionString = builder.Configuration
+	.GetConnectionString("Sqlite") ?? "Data Source=./temp/data/DataSpecificationNavigatorDB.db";
 builder.Services
 	.AddDbContext<AppDbContext>(b => b.UseSqlite(connectionString)
 	.UseLazyLoadingProxies());
@@ -64,7 +63,6 @@ app.UseCors();
 	});
 }*/
 
-// To do: Log payloads and responses in each endpoint.
 // To do: Update OpenAPI documentation.
 
 // Sanity check.
