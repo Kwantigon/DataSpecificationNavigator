@@ -1,9 +1,0 @@
-<button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 shrink-0">
-  <a href="http://localhost:5173/manage-conversations?newConversation=true&uuid=ca85277a-8a2b-4874-bc7a-13bd48fe798a&packageName=Zázna+informačního+systému+nahrazující+úředně+ověřený+podpis" target="_blank">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link h-4 w-4">
-      <path d="M18 3h3v3"></path>
-      <path d="M21 3l-9 9"></path>
-      <path d="M3 21v-6a2 2 0 0 1 2-2h6"></path>
-    </svg>
-  </a>
-</button>

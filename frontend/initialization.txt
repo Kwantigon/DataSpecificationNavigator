@@ -1,8 +1,0 @@
-To create a new project and install dependencies, I had to do the following:
-
-npm create vite@latest data-navigation-frontend -- --template react-ts
-cd data-navigation-frontend
-npm install
-npm install react-router-dom lucide-react
-
-Then follow the steps at: https://ui.shadcn.com/docs/installation/vite
