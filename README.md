@@ -16,13 +16,13 @@ git clone https://github.com/Kwantigon/DataSpecificationNavigator
 cd DataSpecificationNavigator
 ```
 
-2. **Change default Ollama configuration**
+2. **Change the default Ollama configuration**
 
 By default, the backend will try to connect to the LLM served by Ollama with the following values:
 - Uri: http://host.docker.internal:11434
 - Model: deepseek-r1:70b
 
-This default settings assumes that the LLM is available on the host machine at port 11434. If the LLM is running on a different address you must do the following:
+This default setting assumes that the LLM is available on the host machine at port 11434. If the LLM is running on a different address you must do the following:
 
 ```bash
 cd /backend
