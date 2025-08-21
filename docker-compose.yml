@@ -11,6 +11,10 @@ services:
       # Map the host ./backend_data to /app/data in the container.
       # That's where the SQLITE file is.
       - ./backend_data:/app/data
+    extra_hosts:
+      # Apparently, on Linux, the host.docker.internal is not automatically mapped.
+      # So map it to the host IP address here.
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build:
