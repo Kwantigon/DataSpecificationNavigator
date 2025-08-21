@@ -22,7 +22,6 @@ builder.Services
 	.AddScoped<ILlmConnector, OllamaConnector>()
 	.AddScoped<IRdfProcessor, RdfProcessor>()
 	.AddScoped<ILlmResponseProcessor, ResponseProcessor>()
-	.AddScoped<ILlmConnector, GeminiConnector>()
 	.AddScoped<ISparqlTranslationService, SparqlTranslationService>()
 	.AddScoped<IPromptConstructor, PromptConstructor>()
 	;
@@ -47,12 +46,20 @@ builder.Services.AddCors(options =>
 });*/
 
 var connectionString = builder.Configuration
-	.GetConnectionString("Sqlite") ?? "Data Source=./temp/data/DataSpecificationNavigatorDB.db";
+	.GetConnectionString("Sqlite") ?? "Data Source=/app/data/DataSpecificationNavigatorDB.db";
 builder.Services
 	.AddDbContext<AppDbContext>(b => b.UseSqlite(connectionString)
 	.UseLazyLoadingProxies());
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+	// Apply database migrations.
+	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+	db.Database.Migrate();
+}
+
 app.UseCors();
 /*if (app.Environment.IsDevelopment())
 {
