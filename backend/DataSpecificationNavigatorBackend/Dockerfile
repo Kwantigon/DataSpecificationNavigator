@@ -20,6 +20,9 @@ WORKDIR /app
 # Copy the published application from the build stage.
 COPY --from=build /app/publish .
 
+# Create the database directory.
+RUN mkdir /app/data
+
 EXPOSE 8080
 
 # Set the entry point for the application
