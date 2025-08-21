@@ -67,4 +67,5 @@ After building the images, run both the frontend and the backend.
 docker-compose up
 ```
 
-Access the frontend at http://localhost:8081
+Access the frontend at http://localhost:8081.
+
