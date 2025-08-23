@@ -50,7 +50,7 @@ export interface SuggestedProperty {
 }
 
 export interface GroupedSuggestions {
-	domain: string;
+	itemExpanded: string;
 	suggestions: SuggestedProperty[];
 }
 
@@ -63,14 +63,18 @@ export interface SubstructureDatatypeProperty {
 	iri: string;
 	label: string;
 	domain: string;
+	domainLabel: string;
 	range: string;
+	rangeLabel: string;
 }
 
 export interface SubstructureObjectProperty {
 	iri: string;
 	label: string;
 	domain: string;
+	domainLabel: string;
 	range: string;
+	rangeLabel: string;
 }
 
 export interface SubstructureClass {
@@ -314,6 +318,8 @@ function ConversationPage() {
 		} finally {
 			setIsSendingUserMessage(false);
 		}
+
+		fetchSubstructure();
 	};
 
 	const fetchSuggestedMessage = async () => {
@@ -416,10 +422,10 @@ function ConversationPage() {
 	return (
 		<div className="flex h-full p-4 gap-4">
 			{/* LEFT: Chat messages */}
-			<div className={`flex flex-col ${showSubstructure ? "flex-[2]" : "flex-1"}`}>
+			<div className={`flex flex-col ${showSubstructure ? "flex-[2]" : "flex-1"} overflow-y-auto`}>
 				<div className="flex justify-end mb-2">
 					<Button variant="outline" size="sm" onClick={() => setShowSubstructure(!showSubstructure)}>
-						{showSubstructure ? "Hide mapped data specification items" : "Show mapped data specification items"}
+						{showSubstructure ? "Hide mapped data specification items >" : "< Show mapped data specification items"}
 					</Button>
 				</div>
 
@@ -534,6 +540,7 @@ function ConversationPage() {
 								handleSendUserMessage();
 							}
 						}}
+						disabled={isSendingUserMessage}
 					/>
 					<Button onClick={handleSendUserMessage} disabled={isSendingUserMessage}>SEND</Button>
 				</div>
@@ -541,7 +548,7 @@ function ConversationPage() {
 
 			{/* RIGHT: Substructure sidebar (toggleable) */}
 			{showSubstructure && (
-				<div className="1/4 border rounded-md p-4 flex flex-col bg-gray-50">
+				<div className="w-75 border-l overflow-y-auto px-2 bg-gray-50">
 					<h2 className="text-lg font-bold mb-2">Mapped data specification items</h2>
 					{isFetchingSubstructure ? (
 						<p>Loading items...</p>
@@ -552,7 +559,6 @@ function ConversationPage() {
 							{dataSpecificationSubstructure.classItems.map((classItem) => (
 								<div key={classItem.iri} className="p-3 border-l-4 border-blue-500 bg-white shadow-sm rounded-md">
 									<h3 className="text-base font-semibold text-blue-800">{classItem.label}</h3>
-									<p className="text-xs text-gray-500 mb-1">IRI: {classItem.iri}</p>
 									{classItem.objectProperties.length > 0 && (
 										<div className="mt-2">
 											<h4 className="text-sm font-medium text-gray-700">Object properties:</h4>
@@ -560,7 +566,7 @@ function ConversationPage() {
 												{classItem.objectProperties.map((prop) => (
 													<li key={prop.iri}>
 														<span className="font-medium">{prop.label}</span>
-														<span className="ml-1 text-xs text-gray-500">({prop.domain} → {prop.range})</span>
+														<span className="ml-1 text-xs text-gray-500">(→ {prop.rangeLabel})</span>
 													</li>
 												))}
 											</ul>
@@ -575,7 +581,7 @@ function ConversationPage() {
 												{classItem.datatypeProperties.map((prop) => (
 													<li key={prop.iri}>
 														<span className="font-medium">{prop.label}</span>
-														<span className="ml-1 text-xs text-gray-500">({prop.range})</span>
+														<span className="ml-1 text-xs text-gray-500">({prop.rangeLabel})</span>
 													</li>
 												))}
 											</ul>
@@ -626,38 +632,6 @@ function ConversationPage() {
 								</p>
 								{isSuggestionFromCurrentReply ? (
 									<>
-										{/*<div className="flex items-center space-x-2">
-												<Checkbox
-													id="optional-item"
-													checked={selectedPropertiesForExpansion.find(p => p.iri === suggestedPropertySelectedForSummary.property.iri)?.isOptional ?? suggestedPropertyAddAsOptional}
-													onCheckedChange={(checked) => {
-														const selected = selectedPropertiesForExpansion.find(p => p.iri === suggestedPropertySelectedForSummary.property.iri);
-														if (selected) {
-															selected.isOptional = !!checked;
-														} else {
-															setSuggestedPropertyAddAsOptional(!!checked);
-														}
-													}}
-													className="w-6 h-6 border-2 border-gray-700 data-[state=checked]:bg-gray-700"
-												/>
-												<Label htmlFor="optional-item">Add as OPTIONAL</Label>
-											</div>*/}
-										{/*isDatatypeProperty(suggestedPropertySelectedForSummary.property) && (<div className="mt-4">
-												<Label htmlFor="filter-expression">Filter expression</Label>
-												<Input
-													id="filter-expression"
-													placeholder="e.g., {var} > 100"
-													value={selectedPropertiesForExpansion.find(p => p.iri === suggestedPropertySelectedForSummary.property.iri)?.filterExpression ?? suggestedPropertyFilterExpression}
-													onChange={(e) => {
-														const selected = selectedPropertiesForExpansion.find(p => p.iri === suggestedPropertySelectedForSummary.property.iri);
-														if (selected) {
-															selected.filterExpression = e.target.value;
-														} else {
-															setSuggestedPropertyFilterExpression(e.target.value);
-														}
-													}}
-												/>
-											</div>)*/}
 										{/* Add or Remove button */}
 										{suggestionIsSelected(suggestedPropertySelectedForSummary.property) ? (
 											<Button
