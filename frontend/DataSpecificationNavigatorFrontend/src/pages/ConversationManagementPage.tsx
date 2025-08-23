@@ -260,7 +260,7 @@ function ConversationManagementPage() {
 								onChange={(e) => setNewConversationDataSpecName(e.target.value)}
 								className="col-span-3"
 								placeholder="e.g., Badminton specification"
-								disabled={isCreatingConversation}
+								disabled={true}
 							/>
 						</div>
 						<div className="grid grid-cols-4 items-center gap-4">
