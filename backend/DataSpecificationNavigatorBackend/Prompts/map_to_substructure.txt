@@ -15,21 +15,20 @@ The following items have been identified to match the concepts mentioned by the 
 {2}
 
 ### Task
-Map each of the item in the **current context** to the words that correspond to them in the user question.
-You must map the question to **all** items in the current context.
+Map each of the item in the **current context** to the words or phrase that correspond to them in the user question.
+**IMPORTANT**: Each item from the current context **must** be mapped to words or phrases that appear in the user question.
+Do not assign the same MappedWords to multiple items.
 
 Additionally, determine which **classes** are the **select targets** of the user's question.
 A select target class is one that should appear in the `SELECT` clause of a SPARQL query that answers this question.
 For example, in the query `SELECT ?a ?b WHERE {{ ... }}`, the variables `?a` and `?b` are select targets.
 
-Only items of type `Class` can be marked as select targets.
-If an item is not of type `Class`, set `"IsSelectTarget": false`.
-Only mark `"IsSelectTarget": true` if you are confident that the user wants instances of this class in the final output.
+Only mark `"IsSelectTarget": true` if you are confident that the user wants instances of this item in the final output.
 If uncertain, default to `"IsSelectTarget": false`.
 
 Return a JSON array. Each element in the array must be an object with the following fields:
 - `Iri` (string): The IRI of the item from the data specification.
-- `MappedWords` (string): The exact words or phrase from the user question that refer to this item. If no words match, return an empty string.
+- `MappedWords` (string): The exact words or phrase from the user question that refer to this item. Must not be empty.
 - `IsSelectTarget` (boolean): Whether this item is a select target in the SPARQL query. Only applies to items of type `Class`.
 
 If the user question is not coherent or does not relate to the data specification in any way, return an empty JSON array.
