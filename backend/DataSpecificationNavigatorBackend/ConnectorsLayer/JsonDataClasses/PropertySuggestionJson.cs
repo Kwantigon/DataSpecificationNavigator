@@ -1,6 +1,4 @@
-﻿using DataSpecificationNavigatorBackend.Model;
-
-namespace DataSpecificationNavigatorBackend.ConnectorsLayer.JsonDataClasses;
+﻿namespace DataSpecificationNavigatorBackend.ConnectorsLayer.JsonDataClasses;
 
 public record PropertySuggestionJson(
 	string Iri,

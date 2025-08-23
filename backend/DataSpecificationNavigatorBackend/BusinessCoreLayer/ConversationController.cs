@@ -253,7 +253,13 @@ public class ConversationController(
 
 		SuggestionsTransformer transformer = new();
 		SuggestionsDTO suggestions = transformer.TransformSuggestedProperties(suggestedProperties, replyMessage.Conversation.DataSpecificationSubstructure);
-		
+
+
+		// The assumption here is that the mapped phrases are unique.
+		// Which they should be, because the LLM is instructed to return unique phrases.
+		List<string> mappedPhrases = itemMappings.Select(item => item.MappedWords).ToList();
+		var indices = FindNonOverlappingSubstringIndices(replyMessage.PrecedingUserMessage.TextContent, mappedPhrases);
+
 		return new ReplyMessageDTO()
 		{
 			Id = replyMessage.Id,
@@ -266,12 +272,66 @@ public class ConversationController(
 					Label = m.Item.Label,
 					Summary = m.Item.Summary ?? "Sorry, I was not able to make a summary for this item.",
 					MappedPhrase = m.MappedWords,
-					StartIndex = m.StartIndex,
-					EndIndex = m.EndIndex
+					StartIndex = indices[m.MappedWords].StartIndex,
+					EndIndex = indices[m.MappedWords].EndIndex
 				})
 				.ToList(),
 			SparqlQuery = replyMessage.SparqlQuery,
 			Suggestions = suggestions
 		};
+	}
+
+	private Dictionary<string, (int StartIndex, int EndIndex)> FindNonOverlappingSubstringIndices(string userQuestion, List<string> mappedPhrases)
+	{
+		// Sort substrings by length descending to prioritize longer matches.
+		mappedPhrases.Sort((x, y) => y.Length.CompareTo(x.Length));
+
+		bool[] used = new bool[userQuestion.Length];
+		Dictionary<string, (int Start, int End)> foundIndices = new();
+		foreach (string phrase in mappedPhrases)
+		{
+			int start = 0;
+			while (start <= userQuestion.Length - phrase.Length)
+			{
+				int idx = userQuestion.IndexOf(phrase, start);
+				if (idx == -1) break;
+
+				int end = idx + phrase.Length;
+
+				// Check for overlap
+				bool overlap = false;
+				for (int i = idx; i <= end; i++)
+				{
+					if (used[i])
+					{
+						overlap = true;
+						break;
+					}
+				}
+
+				if (!overlap)
+				{
+					foundIndices[phrase] = (idx, end);
+					// Mark indices as used
+					for (int i = idx; i <= end; i++)
+					{
+						used[i] = true;
+					}
+					start = end + 1; // Move past this match.
+				}
+				else
+				{
+					start = idx + 1; // Try next occurrence.
+				}
+			}
+
+			// If no match was found, ensure the phrase is in the dictionary with (0,0).
+			if (!foundIndices.ContainsKey(phrase))
+			{
+				foundIndices[phrase] = (0, 0);
+			}
+		}
+
+		return foundIndices;
 	}
 }
