@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { useParams } from "react-router-dom";
 import { Send } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import MessagesList from "./MessagesList";
 
 const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL;
@@ -425,8 +427,13 @@ function ConversationPage() {
 			{/* LEFT: Chat messages */}
 			<div className={`flex flex-col ${showSubstructure ? "flex-[2]" : "flex-1"} overflow-y-auto`}>
 				<div className="flex justify-end mb-2">
-					<Button variant="outline" size="sm" onClick={() => setShowSubstructure(!showSubstructure)}>
-						{showSubstructure ? "Hide mapped data specification items >" : "< Show mapped data specification items"}
+					<Button
+						size="sm"
+						className="bg-blue-600 hover:bg-blue-700 text-white rounded-full
+												p-3 flex items-center justify-center shadow-md"
+						onClick={() => setShowSubstructure(!showSubstructure)}
+					>
+						{showSubstructure ? <><ChevronRight size={16} />Hide mapped data specification items</> : <><ChevronLeft size={16} />Show mapped data specification items</>}
 					</Button>
 				</div>
 
@@ -471,14 +478,14 @@ function ConversationPage() {
 							<CardContent className="p-3">
 								<p className="text-red-700 font-medium">Failed to send your message.</p>
 								<p className="text-sm text-red-600 mt-1">{sendUserMessageError}</p>
-								<Button
+								{/*<Button
 									variant="outline"
 									size="sm"
 									className="mt-2"
 									onClick={handleSendUserMessage}
 								>
 									Try Again
-								</Button>
+								</Button>*/}
 							</CardContent>
 						</Card>
 					)}
