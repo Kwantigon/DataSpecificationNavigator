@@ -17,7 +17,7 @@ export interface Message {
 }
 export interface WelcomeMessage extends Message {
 	dataSpecificationSummary: string;
-	suggestedMessage: string;
+	suggestedFirstMessage: string;
 	type: "WelcomeMessage";
 }
 export interface UserMessage extends Message {

@@ -26,8 +26,8 @@ function WelcomeMessageCard({ message }: { message: WelcomeMessage }) {
 		<Card className="mb-4 bg-green-50">
 			<CardContent className="p-4 space-y-2">
 				<p className="text-gray-800">{message.text}</p>
-				<p className="text-sm text-gray-600">Summary: {message.dataSpecificationSummary}</p>
-				<p className="italic text-gray-500">Suggested: {message.suggestedMessage}</p>
+				<p className="text-gray-800">Summary: {message.dataSpecificationSummary}</p>
+				<p className="italic text-gray-500">Suggested: {message.suggestedFirstMessage}</p>
 			</CardContent>
 		</Card>
 	);
@@ -161,7 +161,9 @@ function ReplyMessageCard({
 				)}
 
 				{/* Suggestions */}
-				{message.suggestions && (
+				{message.suggestions
+          && (message.suggestions.directConnections.length > 0 || message.suggestions.indirectConnections.length > 0)
+          && (
 					<div>
 						<h4 className="text-sm font-semibold text-gray-600 mb-2">You might also like:</h4>
 						{renderSuggestions(message.suggestions)}
