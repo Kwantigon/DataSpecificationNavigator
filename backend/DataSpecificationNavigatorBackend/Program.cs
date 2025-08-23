@@ -76,8 +76,6 @@ app.UseCors();
 	});
 }*/
 
-// To do: Update OpenAPI documentation.
-
 // Sanity check.
 app.MapGet("/", () => "Hello there!");
 
@@ -86,7 +84,7 @@ app.MapGet("/conversations",
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Get all ongoing conversations.";
-		endpoint.Description = "Front end calls this to display all conversations in the conversations management tab.";
+		endpoint.Description = "Frontend calls this to display all conversations in the conversations management tab.";
 		return endpoint;
 	});
 
@@ -95,7 +93,7 @@ app.MapGet("/conversations/{conversationId}",
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Get information about the conversation.";
-		endpoint.Description = "This endpoint is only for debugging. The front end does not need to call this for anything.";
+		endpoint.Description = "This endpoint is only for debugging. The frontend does not need to call this for anything.";
 		return endpoint;
 	});
 
@@ -104,7 +102,7 @@ app.MapGet("/conversations/{conversationId}/messages",
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Get all messages in the conversation.";
-		endpoint.Description = "Returns all messages ordered by their timestamps. The front end calls this when it loads a conversation and needs to display messages in the conversation.";
+		endpoint.Description = "Returns all messages ordered by their timestamps. The frontend calls this when it loads a conversation and needs to display messages in the conversation.";
 		return endpoint;
 	});
 
@@ -114,14 +112,20 @@ app.MapGet("/conversations/{conversationId}/messages/{messageId}",
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Get the concrete message from a conversation.";
-		endpoint.Description = "Returns all available information about the requested message. The front end calls this to get the reply to an user's message.";
+		endpoint.Description = "The frontend calls this to get the reply to an user's message.";
 		return endpoint;
 	});
 
 app.MapGet(
 	"/conversations/{conversationId}/data-specification-substructure",
 	async (int conversationId,
-				IConversationController controller) => await controller.GetDataSpecificationSubstructureAsync(conversationId));
+				IConversationController controller) => await controller.GetDataSpecificationSubstructureAsync(conversationId))
+	.WithOpenApi(endpoint =>
+	{
+		endpoint.Summary = "Get the data specification substructure that is being built in the conversation.";
+		endpoint.Description = "The frontend calls this endpoint to display all the mapped classes and properties to the user.";
+		return endpoint;
+	});
 
 app.MapPost("/conversations/{conversationId}/messages",
 				async ([FromRoute] int conversationId,
@@ -130,19 +134,20 @@ app.MapPost("/conversations/{conversationId}/messages",
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Add a message to the conversation.";
-		endpoint.Description = "The message that should be added is always assumed to be an user message. Returns the created message that also contains the IRI of the reply message. The front end calls this endpoint to add the user's message to the conversation. It will then call the reply message's IRI to get the system's answer. This endpoint is currently synchronous. I might change it to an asynchronous endpoint later down the line.";
+		endpoint.Description = "Add a new user message to the conversation and generate a reply to that message.";
 		return endpoint;
 	});
 
-app.MapPost("/data-specifications",
+/* This endpoint is currently not used for anything.
+	app.MapPost("/data-specifications",
 				async ([FromBody] PostDataSpecificationsDTO payload,
 							IDataSpecificationController controller) => await controller.ProcessDataspecerPackage(payload))
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Add a new data specification.";
-		endpoint.Description = "Exports and processes the necessary data from the Dataspecer package given in the payload's IRI. If a name is given, the processed data specification will be stored under that name, otherwise a default name will be used.";
+		endpoint.Description = "Exports and processes the necessary data from the Dataspecer package given in the payload's IRI.";
 		return endpoint;
-	});
+	});*/
 
 app.MapPost("/conversations",
 				async ([FromBody] PostConversationsDTO payload,
@@ -150,17 +155,29 @@ app.MapPost("/conversations",
 	.WithOpenApi(endpoint =>
 	{
 		endpoint.Summary = "Start a new conversation.";
-		endpoint.Description = "Starts a new conversation with the given title and using the given data specification in the payload. If the conversation title is not specified, a default name will be used instead.";
+		endpoint.Description = "Starts a new conversation with the given title and using the given data specification in the payload.";
 		return endpoint;
 	});
 
 app.MapPut("/conversations/{conversationId}/user-selected-items",
 	async ([FromRoute] int conversationId, [FromBody] PutUserSelectedItemsDTO payload,
-				IConversationController controller) => await controller.StoreUserSelectionAndGetSuggestedMessage(conversationId, payload));
+				IConversationController controller) => await controller.StoreUserSelectionAndGetSuggestedMessage(conversationId, payload))
+	.WithOpenApi(endpoint =>
+	{
+		endpoint.Summary = "Save user selection and generate suggested message.";
+		endpoint.Description = "Saves the suggested properties selected by the user and generate a suggested message based on that selection. Returns the generated suggested message.";
+		return endpoint;
+	});
 
 app.MapDelete("/conversations/{conversationId}",
 				async ([FromRoute] int conversationId,
-							IConversationController controller) => await controller.DeleteConversationAsync(conversationId));
+							IConversationController controller) => await controller.DeleteConversationAsync(conversationId))
+	.WithOpenApi(endpoint =>
+	{
+		endpoint.Summary = "Delete a conversation.";
+		endpoint.Description = "Deletes the conversation, all messages and the associated data specification.";
+		return endpoint;
+	});
 
 
 // Test endpoints
