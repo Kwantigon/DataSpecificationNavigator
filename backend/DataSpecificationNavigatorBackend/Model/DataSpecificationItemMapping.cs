@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataSpecificationNavigatorBackend.Model;
 
@@ -18,4 +19,10 @@ public class DataSpecificationItemMapping
 	public required string MappedWords { get; set; }
 
 	public bool IsSelectTarget { get; set; } = false;
+
+	[NotMapped]
+	public int StartIndex { get; set; }
+
+	[NotMapped]
+	public int EndIndex { get; set; }
 }

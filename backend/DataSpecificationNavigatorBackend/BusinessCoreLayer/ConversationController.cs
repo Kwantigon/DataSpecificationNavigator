@@ -57,10 +57,10 @@ public class ConversationController(
 			return Results.NotFound(new ErrorDTO { Reason = $"Conversation with ID {conversationId} not found." });
 		}
 
-		List<ConversationMessageDTO> responseDTO = [];
+		List<MessageDTO> responseDTO = [];
 		foreach (Message msg in conversation.Messages)
 		{
-			ConversationMessageDTO messageDTO = await BuildMessageDTO(msg);
+			MessageDTO messageDTO = await BuildMessageDTO(msg);
 			responseDTO.Add(messageDTO);
 		}
 
@@ -84,7 +84,7 @@ public class ConversationController(
 			return Results.NotFound(new ErrorDTO { Reason = $"Message with ID {messageId} not found." });
 		}
 
-		ConversationMessageDTO messageDTO = await BuildMessageDTO(requestedMessage);
+		MessageDTO messageDTO = await BuildMessageDTO(requestedMessage);
 		return Results.Ok(messageDTO);
 	}
 
@@ -108,11 +108,10 @@ public class ConversationController(
 
 		return Results.Created(
 			$"/conversations/{conversation.Id}/messages/{userMessage.Id}",
-			new ConversationMessageDTO
+			new UserMessageDTO()
 			{
 				Id = userMessage.Id,
-				Sender = userMessage.Sender,
-				TextContent = userMessage.TextContent,
+				Text = userMessage.TextContent,
 				Timestamp = userMessage.Timestamp,
 				ReplyMessageUri = $"/conversations/{conversation.Id}/messages/{userMessage.ReplyMessageId}"
 			}
@@ -202,64 +201,77 @@ public class ConversationController(
 		return Results.Ok(substructure);
 	}
 
-	private async Task<ConversationMessageDTO> BuildMessageDTO(Message message)
+	private async Task<MessageDTO> BuildMessageDTO(Message message)
 	{
-		ConversationMessageDTO messageDTO;
-		if (message is UserMessage userMessage)
+		MessageDTO messageDTO;
+		switch (message)
 		{
-			messageDTO = new()
-			{
-				Id = message.Id,
-				Sender = message.Sender,
-				TextContent = message.TextContent,
-				Timestamp = message.Timestamp,
-				ReplyMessageUri = $"/conversations/{message.Conversation.Id}/messages/{userMessage.ReplyMessageId}"
-			};
-		}
-		else if (message is ReplyMessage replyMessage)
-		{
-			messageDTO = await BuildMessageDTOFromReplyAsync(replyMessage);
-		}
-		else // This is a WelcomeMessage.
-		{
-			messageDTO = new()
-			{
-				Id = message.Id,
-				Sender = message.Sender,
-				TextContent = message.TextContent,
-				Timestamp = message.Timestamp
-			};
+			case WelcomeMessage welcomeMessage:
+				messageDTO = new WelcomeMessageDTO()
+				{
+					Id = message.Id,
+					Text = message.TextContent,
+					Timestamp = message.Timestamp,
+					DataSpecificationSummary = "To do: Add welcomeMessage.Summary",
+					SuggestedFirstMessage = "To do: Add welcomeMessage.SuggestedFirstMessage"
+				};
+				break;
+			case UserMessage userMessage:
+				messageDTO = new UserMessageDTO()
+				{
+					Id = message.Id,
+					Text = message.TextContent,
+					Timestamp = message.Timestamp,
+					ReplyMessageUri = $"/conversations/{message.Conversation.Id}/messages/{userMessage.ReplyMessageId}"
+				};
+				break;
+			case ReplyMessage replyMessage:
+				messageDTO = await BuildMessageDTOFromReplyAsync(replyMessage);
+				break;
+			default:
+				_logger.LogError("Unknown message type: {Type}", message.GetType().Name);
+				messageDTO = new MessageDTO()
+				{
+					Id = message.Id,
+					Text = message.TextContent,
+					Timestamp = message.Timestamp,
+					Type = MessageDTOType.UserMessage // Fallback to UserMessage
+				};
+				break;
 		}
 
 		return messageDTO;
 	}
 
-	private async Task<ConversationMessageDTO> BuildMessageDTOFromReplyAsync(ReplyMessage replyMessage)
+	private async Task<MessageDTO> BuildMessageDTOFromReplyAsync(ReplyMessage replyMessage)
 	{
-		ConversationMessageDTO messageDTO = new();
-		messageDTO.Id = replyMessage.Id;
-		messageDTO.MappingText = replyMessage.MappingText;
-
 		List<DataSpecificationItemMapping> itemMappings =
 			await _conversationService.GetMappingsOfReplyMessage(replyMessage);
-		messageDTO.MappedItems = itemMappings
-			.Select(m => new MappedItemDTO
-			{
-				Iri = m.ItemIri,
-				Label = m.Item.Label,
-				Summary = m.Item.Summary,
-				MappedWords = m.MappedWords
-			})
-			.ToList();
 
-		messageDTO.SparqlText = replyMessage.SparqlText;
-		messageDTO.SparqlQuery = replyMessage.SparqlQuery;
-		messageDTO.SuggestItemsText = replyMessage.SuggestPropertiesText;
-
-		List<DataSpecificationPropertySuggestion> itemSuggestions =
+		List<DataSpecificationPropertySuggestion> suggestedProperties =
 			await _conversationService.GetSuggestedPropertiesOfReplyMessage(replyMessage);
+
 		SuggestionsTransformer transformer = new();
-		messageDTO.Suggestions = transformer.TransformSuggestedProperties(itemSuggestions, replyMessage.Conversation.DataSpecificationSubstructure);
-		return messageDTO;
+		SuggestionsDTO suggestions = transformer.TransformSuggestedProperties(suggestedProperties, replyMessage.Conversation.DataSpecificationSubstructure);
+		
+		return new ReplyMessageDTO()
+		{
+			Id = replyMessage.Id,
+			Text = replyMessage.TextContent,
+			Timestamp = replyMessage.Timestamp,
+			MappedItems = itemMappings
+				.Select(m => new MappedDataSpecificationItemDTO
+				{
+					Iri = m.ItemIri,
+					Label = m.Item.Label,
+					Summary = m.Item.Summary ?? "Sorry, I was not able to make a summary for this item.",
+					MappedPhrase = m.MappedWords,
+					StartIndex = m.StartIndex,
+					EndIndex = m.EndIndex
+				})
+				.ToList(),
+			SparqlQuery = replyMessage.SparqlQuery,
+			Suggestions = suggestions
+		};
 	}
 }

@@ -452,21 +452,35 @@ public class ConversationService(
 			{
 				domainInSubstructure.ObjectProperties.Add(new SubstructureObjectProperty
 				{
-					Iri = property.Iri,
-					Label = property.Label,
-					Domain = property.DomainIri,
+					Iri = objectProperty.Iri,
+					Label = objectProperty.Label,
+					Domain = objectProperty.DomainIri,
+					DomainLabel = objectProperty.Domain.Label,
 					Range = objectProperty.RangeIri,
+					RangeLabel = objectProperty.Range.Label,
 					IsOptional = userSelection?.IsOptional ?? false
 				});
 			}
 			else if (property is DatatypePropertyItem datatypeProperty)
 			{
+				// Take the datatype IRI and make it more readable.
+				Uri datatypeIri = new(datatypeProperty.RangeDatatypeIri);
+				// Use only the fragment part of the IRI (after the last # or /).
+				string rangeLabel = datatypeIri.Fragment.Length > 1
+					? datatypeIri.Fragment[1..] // Skip the leading '#'
+					: datatypeIri.Segments.Length > 0
+						? datatypeIri.Segments[^1] // Take the last segment
+						: datatypeProperty.RangeDatatypeIri; // Fallback to full IRI if no fragment or segments
+				rangeLabel = Uri.UnescapeDataString(rangeLabel); // Decode any percent-encoded characters.
+
 				domainInSubstructure.DatatypeProperties.Add(new SubstructureDatatypeProperty
 				{
-					Iri = property.Iri,
-					Label = property.Label,
-					Domain = property.DomainIri,
+					Iri = datatypeProperty.Iri,
+					Label = datatypeProperty.Label,
+					Domain = datatypeProperty.DomainIri,
+					DomainLabel = datatypeProperty.Domain.Label,
 					Range = datatypeProperty.RangeDatatypeIri,
+					RangeLabel = rangeLabel,
 					IsSelectTarget = userSelection?.IsSelectTarget ?? true,
 					FilterExpression = userSelection?.FilterExpression,
 					IsOptional = userSelection?.IsOptional ?? false

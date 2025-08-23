@@ -29,8 +29,12 @@ public class DataSpecificationSubstructure
 		public required string Label { get; set; }
 					 
 		public required string Domain { get; set; }
-					 
+
+		public required string DomainLabel { get; set; }
+
 		public required string Range { get; set; }
+
+		public required string RangeLabel { get; set; }
 
 		public bool IsOptional { get; set; } = false;
 	}
@@ -43,7 +47,11 @@ public class DataSpecificationSubstructure
 
 		public required string Domain { get; set; }
 
+		public required string DomainLabel { get; set; }
+
 		public required string Range { get; set; }
+
+		public required string RangeLabel { get; set; }
 
 		public bool IsOptional { get; set; } = false;
 

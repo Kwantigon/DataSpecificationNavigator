@@ -13,7 +13,7 @@ public class SuggestionsTransformer
 
 		foreach (var classItem in substructure.ClassItems)
 		{
-			List<ArrowSuggestionDto> relevant = suggestions
+			List<SuggestedPropertyDTO> relevant = suggestions
 				.Where(suggestion =>
 				{
 					if (suggestion.SuggestedProperty.DomainIri == classItem.Iri)
@@ -35,7 +35,16 @@ public class SuggestionsTransformer
 						}
 						else if (suggestion.SuggestedProperty is DatatypePropertyItem datatypeProperty)
 						{
-							otherClass = datatypeProperty.RangeDatatypeIri;
+							// Take the datatype IRI and make it more readable.
+							Uri datatypeIri = new(datatypeProperty.RangeDatatypeIri);
+							// Use only the fragment part of the IRI (after the last # or /).
+							string label = datatypeIri.Fragment.Length > 1
+								? datatypeIri.Fragment[1..] // Skip the leading '#'
+								: datatypeIri.Segments.Length > 0
+									? datatypeIri.Segments[^1] // Take the last segment
+									: datatypeProperty.RangeDatatypeIri; // Fallback to full IRI if no fragment or segments
+							label = Uri.UnescapeDataString(label); // Decode any percent-encoded characters.
+							otherClass = label;
 						}
 						else
 						{
@@ -44,7 +53,7 @@ public class SuggestionsTransformer
 							otherClass = "[Unknown range]";
 						}
 					}
-					else
+					else // direction is backward (i.e., the classItem is the range)
 					{
 						otherClass = suggestion.SuggestedProperty.Domain.Label;
 					}
@@ -52,13 +61,17 @@ public class SuggestionsTransformer
 					string connection = directionForward
 						? $"→ {suggestion.SuggestedProperty.Label} → {otherClass}"
 						: $"← {suggestion.SuggestedProperty.Label} ← {otherClass}";
-
-					return new ArrowSuggestionDto(
-						suggestion.SuggestedPropertyIri,
-						suggestion.SuggestedProperty.Label,
-						connection,
-						suggestion.ReasonForSuggestion,
-						suggestion.SuggestedProperty.Summary ?? string.Empty);
+					return new SuggestedPropertyDTO()
+					{
+						Iri = suggestion.SuggestedProperty.Iri,
+						Label = suggestion.SuggestedProperty.Label,
+						Connection = connection,
+						Reason = suggestion.ReasonForSuggestion,
+						Summary = suggestion.SuggestedProperty.Summary ?? string.Empty,
+						Type = suggestion.SuggestedProperty.Type == ItemType.ObjectProperty
+									? SuggestedPropertyDTOType.ObjectProperty
+									: SuggestedPropertyDTOType.DatatypeProperty
+					};
 				})
 				.ToList();
 
@@ -78,7 +91,8 @@ public class SuggestionsTransformer
 					}
 					if (suggestion.SuggestedProperty is ObjectPropertyItem objectProperty)
 					{
-						if (substructure.ClassItems.Any(item => objectProperty.RangeIri == item.Iri)) {
+						if (substructure.ClassItems.Any(item => objectProperty.RangeIri == item.Iri))
+						{
 							// Range is in the substructure, so this is a direct connection.
 							return false;
 						}
@@ -102,7 +116,16 @@ public class SuggestionsTransformer
 							}
 							else if (suggestion.SuggestedProperty is DatatypePropertyItem datatypeProperty)
 							{
-								range = datatypeProperty.RangeDatatypeIri;
+								// Take the datatype IRI and make it more readable.
+								Uri datatypeIri = new(datatypeProperty.RangeDatatypeIri);
+								// Use only the fragment part of the IRI (after the last # or /).
+								string label = datatypeIri.Fragment.Length > 1
+									? datatypeIri.Fragment[1..] // Skip the leading '#'
+									: datatypeIri.Segments.Length > 0
+										? datatypeIri.Segments[^1] // Take the last segment
+										: datatypeProperty.RangeDatatypeIri; // Fallback to full IRI if no fragment or segments
+								label = Uri.UnescapeDataString(label); // Decode any percent-encoded characters.
+								range = label;
 							}
 							else
 							{
@@ -110,14 +133,17 @@ public class SuggestionsTransformer
 								// But handle it just in case.
 								range = "[Unknown range]";
 							}
-
-								return new ArrowSuggestionDto(
-											suggestion.SuggestedProperty.Iri,
-											suggestion.SuggestedProperty.Label,
-											$"→ {suggestion.SuggestedProperty.Label} → {range}",
-											suggestion.ReasonForSuggestion,
-											suggestion.SuggestedProperty.Summary
-									);
+							return new SuggestedPropertyDTO()
+							{
+								Iri = suggestion.SuggestedProperty.Iri,
+								Label = suggestion.SuggestedProperty.Label,
+								Connection = $"→ {suggestion.SuggestedProperty.Label} → {range}",
+								Reason = suggestion.ReasonForSuggestion,
+								Summary = suggestion.SuggestedProperty.Summary ?? string.Empty,
+								Type = suggestion.SuggestedProperty.Type == ItemType.ObjectProperty
+									? SuggestedPropertyDTOType.ObjectProperty
+									: SuggestedPropertyDTOType.DatatypeProperty
+							};
 						}).ToList()
 				))
 				.ToList();
