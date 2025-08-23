@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useParams } from "react-router-dom";
+import { Send } from "lucide-react";
 import MessagesList from "./MessagesList";
 
 const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL;
@@ -542,7 +543,14 @@ function ConversationPage() {
 						}}
 						disabled={isSendingUserMessage}
 					/>
-					<Button onClick={handleSendUserMessage} disabled={isSendingUserMessage}>SEND</Button>
+					<Button
+						onClick={handleSendUserMessage}
+						disabled={isSendingUserMessage}
+						className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 flex items-center justify-center 
+    										shadow-md transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+					>
+						<Send size={20} />
+					</Button>
 				</div>
 			</div>
 
