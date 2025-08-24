@@ -88,6 +88,45 @@ public class ConversationService(
 				// Create a new data specification substructure with the newly mapped items.
 				conversation.DataSpecificationSubstructure = new DataSpecificationSubstructure();
 				List<DataSpecificationItem> itemsToAdd = mappings.Select(m => m.Item).ToList();
+
+				// In the ideal case, 'itemsToAdd' contains mapped classes, properties, and all their domains and ranges.
+				// But since it is an output from the LLM, it might not be complete.
+				// Add missing domains and ranges.
+				foreach (PropertyItem property in itemsToAdd.OfType<PropertyItem>())
+				{
+					if (!itemsToAdd.Any(item => item.Iri == property.DomainIri))
+					{
+						DataSpecificationItemMapping mapping = new()
+						{
+							ItemDataSpecificationId = property.DataSpecificationId,
+							ItemIri = property.DomainIri,
+							UserMessageId = userMessage.Id,
+							Item = property.Domain,
+							UserMessage = userMessage,
+							MappedWords = string.Empty, // Was not mapped directly from the user message.
+							IsSelectTarget = false // If it was not mapped directly, I guess it should not be a select target?
+						};
+						await _database.ItemMappings.AddAsync(mapping);
+						itemsToAdd.Add(property.Domain);
+					}
+					if (property is ObjectPropertyItem objectProperty &&
+							!itemsToAdd.Any(item => item.Iri == objectProperty.RangeIri))
+					{
+						DataSpecificationItemMapping mapping = new()
+						{
+							ItemDataSpecificationId = objectProperty.DataSpecificationId,
+							ItemIri = objectProperty.RangeIri,
+							UserMessageId = userMessage.Id,
+							Item = objectProperty.Range,
+							UserMessage = userMessage,
+							MappedWords = string.Empty, // Was not mapped directly from the user message.
+							IsSelectTarget = false // If it was not mapped directly, I guess it should not be a select target?
+						};
+						await _database.ItemMappings.AddAsync(mapping);
+						itemsToAdd.Add(objectProperty.Range);
+					}
+				}
+
 				AddDataSpecItemsToConversationSubstructure(conversation, itemsToAdd, []); // No user selections at this point, so passing an empty list.
 			}
 		}
@@ -98,7 +137,7 @@ public class ConversationService(
 			{
 				_logger.LogError("User sent the suggested message but there are no items for expansion selected by the user in the conversation.");
 				// Just do nothing, I think.
-				// To do: Return or throw an exception?
+				// To do: Generate a reply message saying that no items were selected. The user should try again.
 			}
 			else
 			{

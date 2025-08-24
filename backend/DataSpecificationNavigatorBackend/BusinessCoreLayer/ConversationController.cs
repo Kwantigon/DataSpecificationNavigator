@@ -257,7 +257,10 @@ public class ConversationController(
 
 		// The assumption here is that the mapped phrases are unique.
 		// Which they should be, because the LLM is instructed to return unique phrases.
-		List<string> mappedPhrases = itemMappings.Select(item => item.MappedWords).ToList();
+		List<string> mappedPhrases = itemMappings
+			.Select(item => item.MappedWords)
+			.Where(phrase => !string.IsNullOrWhiteSpace(phrase))
+			.ToList();
 		var indices = FindNonOverlappingSubstringIndices(replyMessage.PrecedingUserMessage.TextContent, mappedPhrases);
 
 		return new ReplyMessageDTO()
@@ -272,8 +275,10 @@ public class ConversationController(
 					Label = m.Item.Label,
 					Summary = m.Item.Summary ?? "Sorry, I was not able to make a summary for this item.",
 					MappedPhrase = m.MappedWords,
-					StartIndex = indices[m.MappedWords].StartIndex,
-					EndIndex = indices[m.MappedWords].EndIndex
+					StartIndex = string.IsNullOrWhiteSpace(m.MappedWords) ? -1 : indices[m.MappedWords].StartIndex,
+					EndIndex = string.IsNullOrWhiteSpace(m.MappedWords) ? -1 : indices[m.MappedWords].EndIndex
+					// If the mapped item does not have a corresponding phrase,
+					// set indices to -1 to indicate "not found" for the frontend.
 				})
 				.ToList(),
 			SparqlQuery = replyMessage.SparqlQuery,
@@ -325,10 +330,10 @@ public class ConversationController(
 				}
 			}
 
-			// If no match was found, ensure the phrase is in the dictionary with (0,0).
+			// If no match was found, ensure the phrase is in the dictionary with (-1, -1).
 			if (!foundIndices.ContainsKey(phrase))
 			{
-				foundIndices[phrase] = (0, 0);
+				foundIndices[phrase] = (-1, -1);
 			}
 		}
 

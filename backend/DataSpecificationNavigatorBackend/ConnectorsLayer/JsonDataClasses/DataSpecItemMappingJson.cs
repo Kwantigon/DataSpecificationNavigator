@@ -3,5 +3,5 @@
 public record DataSpecItemMappingJson(
 	string Iri,
 	string Summary,
-	string MappedWords,
+	string MappedWords = "",
 	bool IsSelectTarget = false);
