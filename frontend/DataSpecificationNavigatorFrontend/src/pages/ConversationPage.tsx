@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useParams } from "react-router-dom";
 import { Send } from "lucide-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import MessagesList from "./MessagesList";
 
@@ -102,38 +103,98 @@ function renderMessageWithMappedItems(
 	mappedItems: MappedItem[],
 	onMappedItemClick: (item: MappedItem) => void
 ) {
-	// sort spans by start index (just in case backend sends unordered)
-	const sortedByStartPositions = [...mappedItems].sort((a, b) => a.startIndex - b.startIndex);
+	/* IMPORTANT NOTE:
+			Each mapped item contains the startIndex and endIndex of the mapped words.
+			The 'endIndex' is *inclusive*!
+			For example if I have the string "hello world" and the substring "hello",
+			then the startIndex is 0 and the endIndex is 4 (because it's the index of the last character of the substring).
+			Most methods that work with the strings expect exclusive endIndex, so we have to add 1 to the endIndex.
+	*/
 
-	const elements: React.ReactNode[] = [];
+	// Split mapped items into anchored (have valid indices) vs unanchored
+	const anchoredItems = mappedItems.filter(
+		(item) =>
+			typeof item.startIndex === "number" &&
+			typeof item.endIndex === "number" &&
+			item.startIndex >= 0 &&
+			item.startIndex < item.endIndex &&
+			text.substring(item.startIndex, item.endIndex+1) === item.mappedPhrase
+	);
+
+	const unanchoredItems = mappedItems.filter(
+		(item) => !anchoredItems.includes(item)
+	);
+
+	// sort spans by start index (just in case backend sends unordered)
+	const sortedByStartPositions = anchoredItems.sort((a, b) => a.startIndex - b.startIndex);
+
+	const anchoredElements: React.ReactNode[] = [];
 	let lastIndex = 0;
 
 	sortedByStartPositions.forEach((item, i) => {
-		// push the text before this item.
+		const itemEndIndexExclusive = item.endIndex + 1;
+
+		// Add the text before this item.
 		if (item.startIndex > lastIndex) {
-			elements.push(<span key={`text-${i}`}>{text.slice(lastIndex, item.startIndex)}</span>);
+			anchoredElements.push(<span key={`text-${i}`}>{text.slice(lastIndex, item.startIndex)}</span>);
 		}
 
-		// push the clickable words.
-		elements.push(
+		// Add the clickable words.
+		anchoredElements.push(
 			<button
 				key={`span-${i}`}
 				onClick={() => onMappedItemClick(item)}
 				className="text-blue-600 underline hover:text-blue-800"
 			>
-				{text.slice(item.startIndex, item.endIndex)}
+				{text.slice(item.startIndex, itemEndIndexExclusive)}
 			</button>
 		);
 
-		lastIndex = item.endIndex;
+		lastIndex = itemEndIndexExclusive;
 	});
 
-	// push any trailing text after the last item.
+	// Add any trailing text after the last item.
 	if (lastIndex < text.length) {
-		elements.push(<span key="text-end">{text.slice(lastIndex)}</span>);
+		anchoredElements.push(<span key="text-end">{text.slice(lastIndex)}</span>);
 	}
 
-	return <>{elements}</>;
+	//return <>{elements}</>;
+	return (
+		<div>
+			<p className="leading-relaxed">{anchoredElements}</p>
+
+			{unanchoredItems.length > 0 && (
+				<div className="mt-2">
+					<Popover>
+						<PopoverTrigger asChild>
+							<Button variant="link" size="sm" className="text-xs p-0 h-auto">
+								+{unanchoredItems.length} {unanchoredItems.length > 1 ? "items" : "item"} not directly mapped to any phrases
+							</Button>
+						</PopoverTrigger>
+						<PopoverContent className="w-64" side="top" align="start">
+							<p className="text-sm font-semibold mb-2">Referenced items</p>
+							<ul className="space-y-1">
+								{unanchoredItems.map((item) => (
+									<li key={item.iri}>
+										<Button
+											variant="link"
+											className="p-0 h-auto text-sm text-blue-600 underline cursor-pointer"
+											onClick={(e) => {
+												e.preventDefault();
+												onMappedItemClick(item);
+											}}
+										>
+											{item.label}
+										</Button>
+									</li>
+								))}
+							</ul>
+						</PopoverContent>
+					</Popover>
+				</div>
+			)}
+		</div>
+	);
 }
 
 function ConversationPage() {
@@ -516,7 +577,7 @@ function ConversationPage() {
 				{/* Current user message */}
 				{currentUserMessage && (
 					<Card className="mt-4 bg-blue-50">
-						<CardContent className="p-4">
+						<CardContent>
 							{isSendingUserMessage ? (
 								// Current message as plain text.
 								<p className="text-gray-800">{currentUserMessage.text}</p>
@@ -622,9 +683,16 @@ function ConversationPage() {
 
 						<div className="py-4">
 							<p>{mappedItemSelectedForSummary?.summary}</p>
-							<p className="mt-2 text-sm text-gray-700 font-semibold">
-								Mapped from: <span className="font-normal">{mappedItemSelectedForSummary?.mappedPhrase}</span>
-							</p>
+							{(mappedItemSelectedForSummary.mappedPhrase !== "") ? (
+								<p className="mt-6 text-sm text-gray-700 font-semibold">
+									{'('}Mapped from: <span className="font-normal">{mappedItemSelectedForSummary.mappedPhrase}</span>{')'}
+								</p>
+							) : (
+								<p className="mt-6 text-sm text-gray-700 font-semibold">
+									{'('}Not directly mapped to a phrase.{')'}
+								</p>
+							)
+							}
 						</div>
 					</DialogContent>
 				</Dialog>

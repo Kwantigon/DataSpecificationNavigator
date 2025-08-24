@@ -120,7 +120,7 @@ function ReplyMessageCard({
 
                     {/* Filter expression input for datatype properties */}
                     {isDatatypeProperty(item) && (
-                      <Input
+                      <Input className="w-fit"
                         placeholder="Filter expression (e.g. {var} > 100)"
                         value={existingSelection.filterExpression ?? ""}
                         onChange={(e) =>
@@ -147,8 +147,8 @@ function ReplyMessageCard({
 
         {(suggestions.indirectConnections.length > 0) && (
           <>
-            <p className="text-sm font-semibold text-gray-600 mb-2medium italic">More items to consider</p>
-            {suggestions.indirectConnections?.map((group, idx) =>
+            {/*<p className="text-sm font-semibold text-gray-600 mb-2medium italic">More items to consider</p>*/}
+            {suggestions.indirectConnections.map((group, idx) =>
               renderGroup(group, `indirect-${idx}`)
             )}
           </>
