@@ -60,4 +60,9 @@ After building the images, run both the frontend and the backend.
 docker-compose up
 ```
 
-Access the frontend at http://localhost:8081.
+Access the frontend at `http://localhost:8080`.
+
+The backend is running at `http://localhost:8080/backend-api`.
+
+You can try sending a GET requrest to `http://localhost:8080/backend-api/hello` to check that the backend is running.
+
