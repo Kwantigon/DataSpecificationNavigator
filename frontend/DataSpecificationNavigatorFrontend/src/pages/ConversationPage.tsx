@@ -159,7 +159,6 @@ function renderMessageWithMappedItems(
 		anchoredElements.push(<span key="text-end">{text.slice(lastIndex)}</span>);
 	}
 
-	//return <>{elements}</>;
 	return (
 		<div>
 			<p className="leading-relaxed">{anchoredElements}</p>
@@ -179,11 +178,9 @@ function renderMessageWithMappedItems(
 									<li key={item.iri}>
 										<Button
 											variant="link"
-											className="p-0 h-auto text-sm text-blue-600 underline cursor-pointer"
-											onClick={(e) => {
-												e.preventDefault();
-												onMappedItemClick(item);
-											}}
+											className="p-0 h-auto text-sm text-blue-600 underline cursor-pointer
+																whitespace-normal break-words text-left"
+											onClick={() => onMappedItemClick(item)}
 										>
 											{item.label}
 										</Button>
