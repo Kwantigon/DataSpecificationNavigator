@@ -93,7 +93,10 @@ function ConversationManagementPage() {
 		setNewConversationError(null);
 		try {
 			if (!newConversationDataSpecIri || !newConversationDataSpecName || !newConversationTitle) {
-				throw new Error("Some fields are missing for conversation creation.");
+				
+				setNewConversationError("Failed to create a conversation. Please make sure that the conversation title is filled in.")
+				setIsCreatingConversation(false);
+				return;
 			}
 
 			const response = await fetch(`${BACKEND_API_URL}/conversations`, {
@@ -136,7 +139,7 @@ function ConversationManagementPage() {
 
 		} catch (err) {
 			console.error('Error creating new conversation:', err);
-			setNewConversationError('Failed to create conversation. Please check your inputs and try again.');
+			setNewConversationError("Sorry, there was an error while creating a conversation.");
 		} finally {
 			setIsCreatingConversation(false);
 		}
