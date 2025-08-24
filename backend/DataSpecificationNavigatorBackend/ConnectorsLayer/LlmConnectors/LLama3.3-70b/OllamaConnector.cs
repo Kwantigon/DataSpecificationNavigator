@@ -23,21 +23,29 @@ public class OllamaConnector : ILlmConnector
 		_promptConstructor = promptConstructor;
 		_responseProcessor = responseProcessor;
 
-		#region Values from appsettings.json
-		string? uri = appSettings["Llm:Ollama:Uri"];
-		if (uri is null)
+		#region Values from configuration
+		string? uri = appSettings["Env:Llm:Ollama:Uri"];
+		if (string.IsNullOrWhiteSpace(uri))
 		{
-			throw new Exception("The key Llm:Ollama:Uri is missing in the config file.");
+			uri = appSettings["Llm:Ollama:Uri"];
+
+			if (string.IsNullOrWhiteSpace(uri))
+				throw new Exception("The uri for Ollama is missing from configuration.");
 		}
 
-		string? model = appSettings["Llm:Ollama:Model"];
-		if (model is null)
+		string? model = appSettings["Env:Llm:Ollama:Model"];
+		if (string.IsNullOrWhiteSpace(model))
 		{
-			throw new Exception("The key Llm:Ollama:Model is missing in the config file.");
+			model = appSettings["Llm:Ollama:Model"];
+
+			if (string.IsNullOrWhiteSpace(model))
+				throw new Exception("The Ollama model is missing from configuration.");
 		}
 
-		_retryAttempts = appSettings.GetValue("Llm:Ollama:RetryAttempts", 3);
-		#endregion Values from appsettings.json
+		_retryAttempts = appSettings.GetValue("Env:Llm:Ollama:RetryAttempts", appSettings.GetValue("Llm:Ollama:RetryAttempts", 3));
+		#endregion Values from configuration
+
+		_logger.LogInformation("Using Ollama LLM at {Uri} with model {Model}. Retry count is set to: {Retries}.", uri, model, _retryAttempts);
 
 		OllamaApiClient ollamaApiClient = new(uri);
 		ollamaApiClient.SelectedModel = model;

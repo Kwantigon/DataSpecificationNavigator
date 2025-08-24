@@ -15,6 +15,10 @@ services:
       # Apparently, on Linux, the host.docker.internal is not automatically mapped.
       # So map it to the host IP address here.
       - "host.docker.internal:host-gateway"
+    environment:
+      - "Env:Llm:Ollama:Uri=${OLLAMA_URI}"
+      - "Env:Llm:Ollama:Model=${OLLAMA_MODEL}"
+      - "Env:Llm:Ollama:RetryAttempts=${RETRY_ATTEMPTS}"
 
   frontend:
     build:
@@ -24,4 +28,3 @@ services:
       - "8081:80"
     depends_on:
       - backend # Not really, but it's meaningless to run the frontend without backend.
-
