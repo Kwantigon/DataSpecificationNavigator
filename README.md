@@ -20,22 +20,15 @@ cd DataSpecificationNavigator
 
 By default, the backend will try to connect to Ollama using the following values:
 - Uri: http://host.docker.internal:11434
-- Model: deepseek-r1:70b
+- Model: llama3.3:70b
 
-This default setting assumes that Ollama is listening on the host machine at port 11434. If Ollama is listening on a different address you must do the following:
+This default setting assumes that Ollama is listening on the host machine at port 11434. If Ollama is listening on a different address you must set its URI in the .env file. To change default settings, do the following:
 
 ```bash
-cd /backend
+cp .env.example .env
 ```
 
-In this directory, there is a file named `usersettings.json`. Put the LLM address and the name of the model you want to use in this file. Then copy it to the directory with the backend project.
-
-```
-# After modifying the usersettings.json file
-cp ./usersettings.json DataSpecificationNavigatorBackend
-```
-
-This will override the default settings.
+Then replace the dummy values with your own values.
 
 3. **Build the docker images**
 
@@ -47,7 +40,7 @@ docker-compose build
 
 The docker-compose.yml specifies mapping of `host.docker.internal` to `host-gateway`. On Linux it means `host.docker.internal` address is likely mapped to 172.17.0.1
 
-If Ollama is listening on 127.0.0.1:11434, then the backend *WILL NOT* be able to connect to it. Make sure Ollama listens on the correct address. There should be an environmental variable for Ollama that sets the address.
+If Ollama is listening on 127.0.0.1:11434, then the backend *WILL NOT* be able to connect to it. Make sure Ollama listens on the correct address.
 
 **SSH tunneling to Ollama**
 
@@ -57,7 +50,7 @@ If the LLM is served by Ollama on a remote server, then you must make sure there
 ssh -f -N -L 0.0.0.0:11434:localhost:11434 user@remote-server
 ```
 
-This is important because again, if the tunnel is from 127.0.0.1:11434 to the remote server, then the backend cannot reach it from inside the container.
+This is important because if the SSH tunnel is from 127.0.0.1:11434 to the remote server, then the backend cannot reach it from inside the container.
 
 ## Running the app
 
@@ -68,4 +61,3 @@ docker-compose up
 ```
 
 Access the frontend at http://localhost:8081.
-

@@ -1,7 +1,0 @@
-"Llm": {
-	"Ollama": {
-		"Uri": "",
-		"Model": "",
-		"RetryAttemps": 3
-	}
-}
