@@ -6,6 +6,7 @@ using DataSpecificationNavigatorBackend.BusinessCoreLayer.SparqlTranslation;
 using DataSpecificationNavigatorBackend.ConnectorsLayer;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors;
+using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 using DataSpecificationNavigatorBackend.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,9 +28,9 @@ builder.Services
 	//.AddScoped<ILlmConnector, GeminiConnector>()
 	.AddScoped<ILlmConnector, OllamaConnector>()
 	.AddScoped<IRdfProcessor, RdfProcessor>()
-	.AddScoped<ILlmResponseProcessor, ResponseProcessor>()
+	.AddScoped<ILlmResponseProcessor, GeminiResponseProcessor>()
 	.AddScoped<ISparqlTranslationService, SparqlTranslationService>()
-	.AddScoped<IPromptConstructor, PromptConstructor>()
+	.AddScoped<IPromptConstructor, GeminiPromptConstructor>()
 	;
 
 builder.Services.AddCors(options =>

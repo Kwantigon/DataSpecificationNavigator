@@ -3,13 +3,13 @@ using DataSpecificationNavigatorBackend.ConnectorsLayer.JsonDataClasses;
 using DataSpecificationNavigatorBackend.Model;
 using System.Text.Json;
 
-namespace DataSpecificationNavigatorBackend.ConnectorsLayer;
+namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 
-public class ResponseProcessor(
-	ILogger<ResponseProcessor> logger,
+public class GeminiResponseProcessor(
+	ILogger<GeminiResponseProcessor> logger,
 	AppDbContext appDbContext) : ILlmResponseProcessor
 {
-	private readonly ILogger<ResponseProcessor> _logger = logger;
+	private readonly ILogger<GeminiResponseProcessor> _logger = logger;
 	private readonly AppDbContext _database = appDbContext;
 
 	public List<DataSpecificationItemMapping>? ExtractMappedItems(string llmResponse, UserMessage userMessage)

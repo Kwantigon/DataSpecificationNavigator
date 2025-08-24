@@ -5,11 +5,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Unicode;
 
-namespace DataSpecificationNavigatorBackend.ConnectorsLayer;
+namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 
-public class PromptConstructor : IPromptConstructor
+public class GeminiPromptConstructor : IPromptConstructor
 {
-	private readonly ILogger<PromptConstructor> _logger;
+	private readonly ILogger<GeminiPromptConstructor> _logger;
 
 	/// <summary>
 	/// Has the following parameters:<br/>
@@ -45,8 +45,8 @@ public class PromptConstructor : IPromptConstructor
 
 	private readonly JsonSerializerOptions _jsonSerializerOptions;
 
-	public PromptConstructor(
-		ILogger<PromptConstructor> logger,
+	public GeminiPromptConstructor(
+		ILogger<GeminiPromptConstructor> logger,
 		IConfiguration appSettings)
 	{
 		_logger = logger;

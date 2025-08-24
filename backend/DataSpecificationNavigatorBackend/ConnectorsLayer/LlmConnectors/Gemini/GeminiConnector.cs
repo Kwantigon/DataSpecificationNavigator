@@ -2,7 +2,7 @@
 using DataSpecificationNavigatorBackend.Model;
 using GenerativeAI;
 
-namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors;
+namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 
 public class GeminiConnector : ILlmConnector
 {
