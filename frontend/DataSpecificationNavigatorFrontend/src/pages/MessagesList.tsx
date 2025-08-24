@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch"
-import { PlusCircle } from "lucide-react";
 import { Copy } from "lucide-react";
 import { useState } from "react";
 /* These imports are not working for some reason.
@@ -62,7 +61,6 @@ interface ReplyMessageCardProps {
     iri: string,
     options: { isOptional?: boolean; filterExpression?: string }
   ) => void;
-  onAddAllSelected: () => void;
   currentReplyMessageId: string | null;
 }
 
@@ -72,7 +70,6 @@ function ReplyMessageCard({
   onSuggestedPropertyClick: onPropertyClick,
   onToggleSuggestedProperty: onPropertyToggle,
   onUpdateSuggestedPropertyOptions: onPropertyOptionsUpdate,
-  onAddAllSelected: onAddAllSelected,
   currentReplyMessageId
 }: ReplyMessageCardProps) {
   const renderSuggestions = (suggestions: Suggestions) => {
@@ -199,17 +196,6 @@ function ReplyMessageCard({
               {renderSuggestions(message.suggestions)}
             </div>
           )}
-
-        {/* Add all button */}
-        {selectedItemsForExpansion.length > 0 && (
-          <Button
-            className="mt-4 w-full"
-            onClick={onAddAllSelected}
-          >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Add all selected items to my message
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
@@ -232,7 +218,6 @@ interface MessagesListProps {
     iri: string,
     options: { isOptional?: boolean; filterExpression?: string }
   ) => void;
-  onAddAllSelected: () => void;
   currentReplyMessageId: string | null;
 }
 
@@ -242,7 +227,6 @@ export default function MessagesList({
   onSuggestedPropertyClick: onSuggestedPropertyClick,
   onToggleSuggestedProperty: onToggleSuggestedProperty,
   onUpdateSuggestedPropertyOptions: onUpdateSuggestedPropertyOptions,
-  onAddAllSelected: onAddAllSelected,
   currentReplyMessageId
 }: MessagesListProps) {
   return (
@@ -262,7 +246,6 @@ export default function MessagesList({
                 onSuggestedPropertyClick={onSuggestedPropertyClick}
                 onToggleSuggestedProperty={onToggleSuggestedProperty}
                 onUpdateSuggestedPropertyOptions={onUpdateSuggestedPropertyOptions}
-                onAddAllSelected={onAddAllSelected}
                 currentReplyMessageId={currentReplyMessageId}
               />
             );

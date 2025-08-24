@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useParams } from "react-router-dom";
+import { PlusCircle } from "lucide-react";
 import { Send } from "lucide-react";
 
 import MessagesList from "./MessagesList";
@@ -118,7 +119,7 @@ function renderMessageWithMappedItems(
 			typeof item.endIndex === "number" &&
 			item.startIndex >= 0 &&
 			item.startIndex < item.endIndex &&
-			text.substring(item.startIndex, item.endIndex+1) === item.mappedPhrase
+			text.substring(item.startIndex, item.endIndex + 1) === item.mappedPhrase
 	);
 
 	const unanchoredItems = mappedItems.filter(
@@ -168,7 +169,7 @@ function renderMessageWithMappedItems(
 					<Popover>
 						<PopoverTrigger asChild>
 							<Button variant="link" size="sm" className="text-xs p-0 h-auto">
-								+{unanchoredItems.length} {unanchoredItems.length > 1 ? "items" : "item"} not directly mapped to any phrases
+								+{unanchoredItems.length} {unanchoredItems.length > 1 ? "items" : "item"} mapped from message
 							</Button>
 						</PopoverTrigger>
 						<PopoverContent className="w-64" side="top" align="start">
@@ -303,6 +304,7 @@ function ConversationPage() {
 		fetchSubstructure();
 	}, []);
 
+	// Scroll to the bottom of the messages area when a new message is sent.
 	useEffect(() => {
 		if (messagesEndRef.current) {
 			messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
@@ -487,16 +489,35 @@ function ConversationPage() {
 		<div className="flex h-full p-4 gap-4">
 			{/* LEFT: Chat messages */}
 			<div className={`flex flex-col ${showSubstructure ? "flex-[2]" : "flex-1"} overflow-y-auto`}>
-				<div className="flex justify-end mb-2">
-					<Button
-						size="sm"
-						className="bg-blue-600 hover:bg-blue-700 text-white rounded-full
-												p-3 flex items-center justify-center shadow-md"
-						onClick={() => setShowSubstructure(!showSubstructure)}
-					>
-						{showSubstructure ? <><ChevronRight size={16} />Hide mapped data specification items</> : <><ChevronLeft size={16} />Show mapped data specification items</>}
-					</Button>
+				<div className="flex justify-between items-center mb-2">
+					{/* Left side: Add all selected items button */}
+					<div>
+						{selectedPropertiesForExpansion.length > 0 && (
+							<Button
+								size="sm"
+								className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 flex items-center justify-center shadow-md"
+								onClick={fetchSuggestedMessage}
+								disabled={isFetchingSuggestedMessage}
+							>
+								<PlusCircle className="w-4 h-4 mr-2" />
+								Add all selected items to my message
+							</Button>
+						)}
+					</div>
+
+					{/* Right side: Toggle substructure button */}
+					<div>
+						<Button
+							size="sm"
+							className="bg-blue-600 hover:bg-blue-700 text-white rounded-full
+              p-3 flex items-center justify-center shadow-md"
+							onClick={() => setShowSubstructure(!showSubstructure)}
+						>
+							{showSubstructure ? <><ChevronRight size={16} />Hide mapped data specification items</> : <><ChevronLeft size={16} />Show mapped data specification items</>}
+						</Button>
+					</div>
 				</div>
+
 
 				{/* Cards with messages */}
 				<div ref={messagesEndRef} className="flex-1 overflow-y-auto border rounded-md p-4 space-y-4">
@@ -519,7 +540,6 @@ function ConversationPage() {
 							onSuggestedPropertyClick={handleSuggestedPropertyClick}
 							onToggleSuggestedProperty={handleCheckboxSuggestedPropertyToggle}
 							onUpdateSuggestedPropertyOptions={handleUpdateSuggestedItemOptions}
-							onAddAllSelected={fetchSuggestedMessage}
 							currentReplyMessageId={currentReplyMessage?.id ?? null}
 						/>
 					)}
@@ -539,14 +559,6 @@ function ConversationPage() {
 							<CardContent className="p-3">
 								<p className="text-red-700 font-medium">Failed to send your message.</p>
 								<p className="text-sm text-red-600 mt-1">{sendUserMessageError}</p>
-								{/*<Button
-									variant="outline"
-									size="sm"
-									className="mt-2"
-									onClick={handleSendUserMessage}
-								>
-									Try Again
-								</Button>*/}
 							</CardContent>
 						</Card>
 					)}
@@ -635,6 +647,7 @@ function ConversationPage() {
 							{dataSpecificationSubstructure.classItems.map((classItem) => (
 								<div key={classItem.iri} className="p-3 border-l-4 border-blue-500 bg-white shadow-sm rounded-md">
 									<h3 className="text-base font-semibold text-blue-800">{classItem.label}</h3>
+									<p className="text-sm text-gray-500 mb-2 break-words">{`(${classItem.iri})`}</p>
 									{classItem.objectProperties.length > 0 && (
 										<div className="mt-2">
 											<h4 className="text-sm font-medium text-gray-700">Object properties:</h4>
