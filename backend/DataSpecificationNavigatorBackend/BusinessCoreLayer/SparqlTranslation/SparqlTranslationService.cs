@@ -15,22 +15,31 @@ public class SparqlTranslationService(
 	{
 		if (substructure.ClassItems.Count == 0)
 			return "SELECT * WHERE {}";
-		QueryGraph graph = FromDataSpecification(substructure);
-		string sparqlQuery = GenerateSparqlQuery(graph);
-		SparqlQueryValidator validator = new();
-		var validationResult = validator.Validate(sparqlQuery);
-		if (validationResult.IsValid)
+
+		try
 		{
-			_logger.LogDebug("Generated SPARQL query is valid.");
+			QueryGraph graph = FromDataSpecification(substructure);
+			string sparqlQuery = GenerateSparqlQuery(graph);
+			SparqlQueryValidator validator = new();
+			var validationResult = validator.Validate(sparqlQuery);
+			if (validationResult.IsValid)
+			{
+				_logger.LogDebug("Generated SPARQL query is valid.");
+			}
+			else
+			{
+				_logger.LogError("The generated SPARQL query is invalid.");
+				_logger.LogError("Validation error: {Err}", validationResult.Error);
+				_logger.LogError("Validation message: {Msg}", validationResult.Message);
+				_logger.LogError("Validation warnings: {Warn}", validationResult.Warnings);
+			}
+			return sparqlQuery;
 		}
-		else
+		catch (Exception ex)
 		{
-			_logger.LogError("The generated SPARQL query is invalid.");
-			_logger.LogError("Validation error: {Err}", validationResult.Error);
-			_logger.LogError("Validation message: {Msg}", validationResult.Message);
-			_logger.LogError("Validation warnings: {Warn}", validationResult.Warnings);
+			_logger.LogError(ex, "An exception occured during the SPARQL query generation.");
+			return "There was an error while generating the SPARQL query.";
 		}
-		return sparqlQuery;
 	}
 
 	private QueryGraph FromDataSpecification(DataSpecificationSubstructure substructure)
@@ -108,79 +117,70 @@ public class SparqlTranslationService(
 		CreateVariableNames(graph);
 
 		var sparql = new StringBuilder();
-		var selectTargets = new HashSet<string>();
+		sparql.AppendLine("SELECT DISTINCT *");
+		sparql.Append("WHERE {");
 
-		sparql.Append("SELECT DISTINCT "); // Will add the SELECT targets later.
-		sparql.AppendLine();
-
-		sparql.Append("WHERE {"); // Not using AppendLine because the method GenerateNode will add the new line.
 		var visited = new HashSet<QueryNode>();
 		foreach (var root in graph.Roots)
 		{
-			GenerateNode(root, sparql, selectTargets, visited, root.VariableName!, 1);
+			GenerateTriplesForNode(root, sparql, visited, root.VariableName!, inOptionalContext: false);
 		}
 		sparql.AppendLine("}");
-
-		// Add SELECT targets.
-		sparql.Insert(16, string.Join(" ", selectTargets) + " ");
-		// index == 16 because we're inserting after "SELECT DISTINCT "
 
 		return sparql.ToString();
 	}
 
-	private void GenerateNode(QueryNode node, StringBuilder sparql, HashSet<string> selectTargets,
-															HashSet<QueryNode> visited, string currentVar, int indentLevel)
+
+	private void GenerateTriplesForNode(
+		QueryNode node, StringBuilder sparql,
+		HashSet<QueryNode> visited, string currentVar,
+		bool inOptionalContext = false)
 	{
 		if (visited.Contains(node))
 			return;
-
 		visited.Add(node);
 
-		string indent = new string(' ', indentLevel * 2);
+		const string indent = "  ";
 
-		// Triple for the type of the variable.
-		sparql.AppendLine();
 		sparql.AppendLine($"{indent}# {node.Label}");
-		sparql.AppendLine($"{indent}{currentVar} a <{node.Iri}> .");
-
-		if (node.IsSelectTarget)
-			selectTargets.Add(currentVar);
-
-		// Datatype properties
-		foreach (DatatypeNode dtProp in node.DatatypeProperties)
+		if (inOptionalContext)
 		{
-			if (dtProp.IsOptional)
+			sparql.AppendLine($"{indent}OPTIONAL {{ {currentVar} a <{node.Iri}> . }}");
+		}
+		else
+		{
+			sparql.AppendLine($"{indent}{currentVar} a <{node.Iri}> .");
+		}
+
+		foreach (DatatypeNode datatypeNode in node.DatatypeProperties)
+		{
+			if (datatypeNode.IsOptional || inOptionalContext)
 			{
-				sparql.AppendLine($"{indent}OPTIONAL {{ {currentVar} <{dtProp.PropertyIri}> {dtProp.VariableName} . }}");
+				sparql.AppendLine($"{indent}OPTIONAL {{ {currentVar} <{datatypeNode.PropertyIri}> {datatypeNode.VariableName} . }}");
 			}
 			else
 			{
-				sparql.AppendLine($"{indent}{currentVar} <{dtProp.PropertyIri}> {dtProp.VariableName} .");
+				sparql.AppendLine($"{indent}{currentVar} <{datatypeNode.PropertyIri}> {datatypeNode.VariableName} .");
 			}
-
-			if (dtProp.IsSelectTarget)
+			if (!string.IsNullOrWhiteSpace(datatypeNode.FilterExpression))
 			{
-				selectTargets.Add(dtProp.VariableName!);
+				sparql.AppendLine($"{indent}  FILTER({datatypeNode.FilterExpression.Replace("{var}", datatypeNode.VariableName)})");
 			}
-
-			if (!string.IsNullOrWhiteSpace(dtProp.FilterExpression))
-				sparql.AppendLine($"{indent}  FILTER({dtProp.FilterExpression.Replace("{var}", dtProp.VariableName)})");
 		}
 
-		// Object properties
 		foreach (QueryEdge edge in node.OutgoingEdges)
 		{
-			if (edge.IsOptional)
+			if (edge.IsOptional || inOptionalContext)
 			{
-				sparql.AppendLine($"{indent}OPTIONAL {{");
-				sparql.AppendLine($"{indent}  {currentVar} <{edge.PropertyIri}> {edge.Target.VariableName} .");
-				GenerateNode(edge.Target, sparql, selectTargets, visited, edge.Target.VariableName!, indentLevel + 1);
-				sparql.AppendLine($"{indent}}}");
+				sparql.AppendLine($"{indent}OPTIONAL {{  {currentVar} <{edge.PropertyIri}> {edge.Target.VariableName} . }}");
+				sparql.AppendLine();
+				GenerateTriplesForNode(edge.Target, sparql, visited, edge.Target.VariableName!, inOptionalContext: true);
 			}
 			else
 			{
 				sparql.AppendLine($"{indent}{currentVar} <{edge.PropertyIri}> {edge.Target.VariableName} .");
-				GenerateNode(edge.Target, sparql, selectTargets, visited, edge.Target.VariableName!, indentLevel);
+				sparql.AppendLine();
+				GenerateTriplesForNode(edge.Target, sparql, visited, edge.Target.VariableName!);
 			}
 		}
 
@@ -205,7 +205,7 @@ public class SparqlTranslationService(
 				}
 				else
 				{
-					node.VariableName = $"?{variableName}0";
+					node.VariableName = $"?{variableName}";
 					varNameOccurences[variableName] = 1;
 				}
 			}
@@ -223,7 +223,7 @@ public class SparqlTranslationService(
 					}
 					else
 					{
-						datatypeNode.VariableName = $"?{variableName}0";
+						datatypeNode.VariableName = $"?{variableName}";
 						varNameOccurences[variableName] = 1;
 					}
 				}

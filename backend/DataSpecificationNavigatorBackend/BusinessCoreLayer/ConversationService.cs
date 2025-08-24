@@ -464,6 +464,9 @@ public class ConversationService(
 					Iri = classToAdd.Iri,
 					Label = classToAdd.Label,
 					IsSelectTarget = true
+					// Currently not taking into account the IsSelectTarget output from the LLM.
+					// Because I feel like if the user adds an item,
+					// they implicitly want it as the select target.
 				};
 				substructure.ClassItems.Add(classItem);
 			}
