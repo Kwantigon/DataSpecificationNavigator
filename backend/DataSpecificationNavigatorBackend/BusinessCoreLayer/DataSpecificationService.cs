@@ -22,12 +22,12 @@ public class DataSpecificationService(
 	{
 		string? dsv = await _dataspecerConnector.ExportDsvFileFromPackageAsync(dataspecerPackageUuid);
 		string? owl;
-		if (string.IsNullOrEmpty(dsv))
+		if (string.IsNullOrWhiteSpace(dsv))
 		{
 			// Failed to export the DSV file, try to export the OWL file directly.
 			_logger.LogError("Failed to export the DSV file from Dataspecer.");
 			owl = await _dataspecerConnector.ExportOwlFileFromPackageAsync(dataspecerPackageUuid);
-			if (string.IsNullOrEmpty(owl))
+			if (string.IsNullOrWhiteSpace(owl))
 			{
 				_logger.LogError("Failed to export the DSV file and the OWL file from Dataspecer.");
 				return null;
@@ -45,7 +45,7 @@ public class DataSpecificationService(
 				// Failed to convert DSV to OWL, try to export the OWL file directly.
 				_logger.LogError(ex, "An exception occured during DSV to OWL conversion.");
 				owl = await _dataspecerConnector.ExportOwlFileFromPackageAsync(dataspecerPackageUuid);
-				if (string.IsNullOrEmpty(owl))
+				if (string.IsNullOrWhiteSpace(owl))
 				{
 					_logger.LogError("Failed to export the DSV file and the OWL file from Dataspecer.");
 					return null;

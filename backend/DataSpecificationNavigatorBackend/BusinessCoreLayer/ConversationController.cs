@@ -163,7 +163,7 @@ public class ConversationController(
 			.Where(selection => selection != null)
 			.ToList();
 		string? suggestedMessage = await _conversationService.UpdateSelectedPropertiesAndGenerateSuggestedMessageAsync(conversation, uniqueIris, userSelections!);
-		if (string.IsNullOrEmpty(suggestedMessage))
+		if (string.IsNullOrWhiteSpace(suggestedMessage))
 		{
 			_logger.LogError("The suggested message is either null or empty.");
 			return Results.InternalServerError(new ErrorDTO() { Reason = "There was an error while generating the suggested message." });
@@ -295,13 +295,20 @@ public class ConversationController(
 		Dictionary<string, (int Start, int End)> foundIndices = new();
 		foreach (string phrase in mappedPhrases)
 		{
+			// Check for empty or whitespace phrases just in case.
+			if (string.IsNullOrWhiteSpace(phrase)) 
+			{
+				continue;
+			}
+
 			int start = 0;
 			while (start <= userQuestion.Length - phrase.Length)
 			{
 				int idx = userQuestion.IndexOf(phrase, start);
 				if (idx == -1) break;
 
-				int end = idx + phrase.Length;
+				int end = idx + phrase.Length - 1; // end == index of the last character in the phrase
+				if (end >= userQuestion.Length) break;
 
 				// Check for overlap
 				bool overlap = false;
@@ -330,10 +337,10 @@ public class ConversationController(
 				}
 			}
 
-			// If no match was found, ensure the phrase is in the dictionary with (-1, -1).
+			// If no match was found, ensure the phrase is in the dictionary with (0, 0).
 			if (!foundIndices.ContainsKey(phrase))
 			{
-				foundIndices[phrase] = (-1, -1);
+				foundIndices[phrase] = (0, 0);
 			}
 		}
 
