@@ -42,7 +42,15 @@ public class OllamaConnector : ILlmConnector
 				throw new Exception("The Ollama model is missing from configuration.");
 		}
 
-		_retryAttempts = config.GetValue("Env:Llm:Ollama:RetryAttempts", config.GetValue("Llm:Ollama:RetryAttempts", 3));
+		string? retryAttemptsStr = config["Env:Llm:Ollama:RetryAttempts"];
+		if (string.IsNullOrWhiteSpace(retryAttemptsStr))
+		{
+			_retryAttempts = config.GetValue("Llm:Ollama:RetryAttempts", 3);
+		}
+		else
+		{
+			_retryAttempts = int.TryParse(retryAttemptsStr, out int parsedRetries) ? parsedRetries : 3;
+		}
 		#endregion Values from configuration
 
 		_logger.LogInformation("Using Ollama LLM at {Uri} with model {Model}. Retry count is set to: {Retries}.", uri, model, _retryAttempts);
