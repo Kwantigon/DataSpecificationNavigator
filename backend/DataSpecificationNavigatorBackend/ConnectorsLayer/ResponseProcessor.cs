@@ -36,7 +36,7 @@ public class ResponseProcessor(
 					continue;
 				}
 
-				if (string.IsNullOrEmpty(dataSpecItem.Summary))
+				if (string.IsNullOrWhiteSpace(dataSpecItem.Summary))
 				{
 					dataSpecItem.Summary = jsonItem.Summary;
 				}
@@ -130,7 +130,7 @@ public class ResponseProcessor(
 					continue;
 				}
 
-				if (string.IsNullOrEmpty(suggestedProperty.Summary))
+				if (string.IsNullOrWhiteSpace(suggestedProperty.Summary))
 				{
 					suggestedProperty.Summary = jsonItem.Summary;
 				}
@@ -147,6 +147,17 @@ public class ResponseProcessor(
 						ReasonForSuggestion = jsonItem.Reason
 					};
 					result.Add(suggestion);
+
+					// Update the summary of the property's domain and range, if they are empty.
+					if (string.IsNullOrWhiteSpace(property.Domain.Summary))
+					{
+						property.Domain.Summary = jsonItem.DomainClass.Summary;
+					}
+					if (property is ObjectPropertyItem objectProperty &&
+							string.IsNullOrWhiteSpace(objectProperty.Range.Summary))
+					{
+						objectProperty.Range.Summary = jsonItem.RangeClass.Summary;
+					}
 				}
 				else
 				{
