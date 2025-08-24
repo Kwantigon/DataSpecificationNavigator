@@ -15,7 +15,7 @@ public class OllamaConnector : ILlmConnector
 
 	public OllamaConnector(
 		ILogger<OllamaConnector> logger,
-		IConfiguration appSettings,
+		IConfiguration config,
 		IPromptConstructor promptConstructor,
 		ILlmResponseProcessor responseProcessor)
 	{
@@ -24,25 +24,25 @@ public class OllamaConnector : ILlmConnector
 		_responseProcessor = responseProcessor;
 
 		#region Values from configuration
-		string? uri = appSettings["Env:Llm:Ollama:Uri"];
+		string? uri = config["Env:Llm:Ollama:Uri"];
 		if (string.IsNullOrWhiteSpace(uri))
 		{
-			uri = appSettings["Llm:Ollama:Uri"];
+			uri = config["Llm:Ollama:Uri"];
 
 			if (string.IsNullOrWhiteSpace(uri))
 				throw new Exception("The uri for Ollama is missing from configuration.");
 		}
 
-		string? model = appSettings["Env:Llm:Ollama:Model"];
+		string? model = config["Env:Llm:Ollama:Model"];
 		if (string.IsNullOrWhiteSpace(model))
 		{
-			model = appSettings["Llm:Ollama:Model"];
+			model = config["Llm:Ollama:Model"];
 
 			if (string.IsNullOrWhiteSpace(model))
 				throw new Exception("The Ollama model is missing from configuration.");
 		}
 
-		_retryAttempts = appSettings.GetValue("Env:Llm:Ollama:RetryAttempts", appSettings.GetValue("Llm:Ollama:RetryAttempts", 3));
+		_retryAttempts = config.GetValue("Env:Llm:Ollama:RetryAttempts", config.GetValue("Llm:Ollama:RetryAttempts", 3));
 		#endregion Values from configuration
 
 		_logger.LogInformation("Using Ollama LLM at {Uri} with model {Model}. Retry count is set to: {Retries}.", uri, model, _retryAttempts);

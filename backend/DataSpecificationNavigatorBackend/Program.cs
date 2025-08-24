@@ -77,8 +77,42 @@ app.UseCors();
 	});
 }*/
 
-// Sanity check.
-app.MapGet("/", () => "Hello there!");
+// Sanity check. Also check the environment variables.
+app.MapGet("/hello", (IConfiguration config) =>
+{
+	#region Ollama configuration
+	string? ollamaUri = config["Env:Llm:Ollama:Uri"];
+	if (string.IsNullOrWhiteSpace(ollamaUri))
+	{
+		ollamaUri = config["Llm:Ollama:Uri"];
+
+		if (string.IsNullOrWhiteSpace(ollamaUri))
+			ollamaUri = "MISSING";
+	}
+
+	string? ollamaModel = config["Env:Llm:Ollama:Model"];
+	if (string.IsNullOrWhiteSpace(ollamaModel))
+	{
+		ollamaModel = config["Llm:Ollama:Model"];
+
+		if (string.IsNullOrWhiteSpace(ollamaModel))
+			ollamaModel = "MISSING";
+	}
+
+	int retryAttempts = config.GetValue("Env:Llm:Ollama:RetryAttempts", config.GetValue("Llm:Ollama:RetryAttempts", -1));
+	#endregion Ollama configuration
+
+	return Results.Ok(new
+	{
+		Message = "Hello from Data specification navigator backend!",
+		Ollama = new
+		{
+			Uri = ollamaUri,
+			Model = ollamaModel,
+			RetryAttempts = retryAttempts
+		}
+	});
+});
 
 app.MapGet("/conversations",
 			async (IConversationController controller) => await controller.GetAllConversationsAsync())
