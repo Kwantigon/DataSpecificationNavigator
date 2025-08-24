@@ -18,11 +18,11 @@ cd DataSpecificationNavigator
 
 2. **Change the default Ollama configuration**
 
-By default, the backend will try to connect to the LLM served by Ollama with the following values:
+By default, the backend will try to connect to Ollama using the following values:
 - Uri: http://host.docker.internal:11434
 - Model: deepseek-r1:70b
 
-This default setting assumes that the LLM is available on the host machine at port 11434. If the LLM is running on a different address you must do the following:
+This default setting assumes that Ollama is listening on the host machine at port 11434. If Ollama is listening on a different address you must do the following:
 
 ```bash
 cd /backend
@@ -47,7 +47,7 @@ docker-compose build
 
 The docker-compose.yml specifies mapping of `host.docker.internal` to `host-gateway`. On Linux it means `host.docker.internal` address is likely mapped to 172.17.0.1
 
-If the LLM is running on 127.0.0.1:11434, then the backend *WILL NOT* be able to connect to the LLM. Make sure Ollama listens on the correct address.
+If Ollama is listening on 127.0.0.1:11434, then the backend *WILL NOT* be able to connect to it. Make sure Ollama listens on the correct address. There should be an environmental variable for Ollama that sets the address.
 
 **SSH tunneling to Ollama**
 
