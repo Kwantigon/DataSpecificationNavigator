@@ -175,6 +175,30 @@ public class GeminiResponseProcessor(
 		}
 	}
 
+	public WelcomeMessageDataSpecificationSummaryJson? ExtractWelcomeMessageSummaryAndSuggestions(
+		string llmResponse)
+	{
+		llmResponse = RemoveBackticks(llmResponse.Trim());
+		try
+		{
+			var jsonData = JsonSerializer.Deserialize<WelcomeMessageDataSpecificationSummaryJson>(llmResponse);
+			if (jsonData is null)
+			{
+				_logger.LogError("The result of the JSON deserialization is null.");
+				return null;
+			}
+			return jsonData;
+			
+			/*var suggestedClasses = jsonData.SuggestedClasses
+				.Select(s => new {s.Label, s.Reason})
+				.ToList();*/
+		}
+		catch (Exception e)
+		{
+			_logger.LogError("An exception occured while deserializing the welcome message from JSON: {Exception}", e);
+			return null;
+		}
+	}
 
 	private string RemoveBackticks(string llmResponse)
 	{

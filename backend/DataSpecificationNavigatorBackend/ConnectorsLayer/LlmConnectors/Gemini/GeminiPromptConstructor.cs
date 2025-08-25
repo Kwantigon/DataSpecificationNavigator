@@ -43,6 +43,12 @@ public class GeminiPromptConstructor : IPromptConstructor
 	/// </summary>
 	private readonly string _dataSpecSubstructureItemsMappingTemplate;
 
+	/// <summary>
+	/// Has the following parameters:<br/>
+	/// {0} = Data specification (OWL file).
+	/// </summary>
+	private readonly string _welcomeMessageDataSpecificationSummaryTemplate;
+
 	private readonly JsonSerializerOptions _jsonSerializerOptions;
 
 	public GeminiPromptConstructor(
@@ -69,14 +75,14 @@ public class GeminiPromptConstructor : IPromptConstructor
 		{
 			throw new Exception("The key Prompts:ItemsMapping is missing in the config file.");
 		}
-		string file = Path.Combine(baseDirectory, itemsMapping);
-		if (!File.Exists(file))
+		string templateFile = Path.Combine(baseDirectory, itemsMapping);
+		if (!File.Exists(templateFile))
 		{
-			throw new Exception($"The template file \"{file}\" does not exist");
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
 		}
 		else
 		{
-			_itemsMappingTemplate = File.ReadAllText(file);
+			_itemsMappingTemplate = File.ReadAllText(templateFile);
 		}
 
 		string? getRelatedItems = appSettings["Prompts:GetRelatedItems"];
@@ -84,14 +90,14 @@ public class GeminiPromptConstructor : IPromptConstructor
 		{
 			throw new Exception("The key Prompts:GetRelatedItems is missing in the config file.");
 		}
-		file = Path.Combine(baseDirectory, getRelatedItems);
-		if (!File.Exists(file))
+		templateFile = Path.Combine(baseDirectory, getRelatedItems);
+		if (!File.Exists(templateFile))
 		{
-			throw new Exception($"The template file \"{file}\" does not exist");
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
 		}
 		else
 		{
-			_getRelatedItemsTemplate = File.ReadAllText(file);
+			_getRelatedItemsTemplate = File.ReadAllText(templateFile);
 		}
 
 		string? generateSuggestedMessage = appSettings["Prompts:GenerateSuggestedMessage"];
@@ -99,14 +105,14 @@ public class GeminiPromptConstructor : IPromptConstructor
 		{
 			throw new Exception("The key Prompts:GenerateSuggestedMessage is missing in the config file.");
 		}
-		file = Path.Combine(baseDirectory, generateSuggestedMessage);
-		if (!File.Exists(file))
+		templateFile = Path.Combine(baseDirectory, generateSuggestedMessage);
+		if (!File.Exists(templateFile))
 		{
-			throw new Exception($"The template file \"{file}\" does not exist");
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
 		}
 		else
 		{
-			_generateSuggestedMessageTemplate = File.ReadAllText(file);
+			_generateSuggestedMessageTemplate = File.ReadAllText(templateFile);
 		}
 
 		string? substructureItemMapping = appSettings["Prompts:DataSpecSubstructureItemsMapping"];
@@ -114,19 +120,35 @@ public class GeminiPromptConstructor : IPromptConstructor
 		{
 			throw new Exception("The key Prompts:DataSpecSubstructureItemsMapping is missing in the config file.");
 		}
-		file = Path.Combine(baseDirectory, substructureItemMapping);
-		if (!File.Exists(file))
+		templateFile = Path.Combine(baseDirectory, substructureItemMapping);
+		if (!File.Exists(templateFile))
 		{
-			throw new Exception($"The template file \"{file}\" does not exist");
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
 		}
 		else
 		{
-			_dataSpecSubstructureItemsMappingTemplate = File.ReadAllText(file);
+			_dataSpecSubstructureItemsMappingTemplate = File.ReadAllText(templateFile);
+		}
+
+		string? welcomeMessageDataSpecificationSummary = appSettings["Prompts:WelcomeMessageDataSpecificationSummary"];
+		if (welcomeMessageDataSpecificationSummary is null)
+		{
+			throw new Exception("The key Prompts:WelcomeMessageDataSpecificationSummary is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, welcomeMessageDataSpecificationSummary);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
+		}
+		else
+		{
+			_welcomeMessageDataSpecificationSummaryTemplate = File.ReadAllText(templateFile);
 		}
 		#endregion Load templates from files
 	}
 
-	public string BuildMapToDataSpecificationPrompt(DataSpecification dataSpecification, string userQuestion)
+	public string BuildMapToDataSpecificationPrompt(
+		DataSpecification dataSpecification, string userQuestion)
 	{
 		_logger.LogDebug("Map to data specification template:\n{Template}", _itemsMappingTemplate);
 		_logger.LogDebug("User question: {UserQuestion}", userQuestion);
@@ -134,7 +156,8 @@ public class GeminiPromptConstructor : IPromptConstructor
 	}
 
 	public string BuildMapToSubstructurePrompt(
-		DataSpecification dataSpecification, string userQuestion, DataSpecificationSubstructure substructure)
+		DataSpecification dataSpecification, string userQuestion,
+		DataSpecificationSubstructure substructure)
 	{
 		_logger.LogDebug("Map to substructure template:\n{Template}", _dataSpecSubstructureItemsMappingTemplate);
 		_logger.LogDebug("User question: {UserQuestion}", userQuestion);
@@ -146,7 +169,8 @@ public class GeminiPromptConstructor : IPromptConstructor
 	}
 
 	public string BuildGetSuggestedItemsPrompt(
-		DataSpecification dataSpecification, string userQuestion, DataSpecificationSubstructure substructure)
+		DataSpecification dataSpecification, string userQuestion,
+		DataSpecificationSubstructure substructure)
 	{
 		_logger.LogDebug("Prompt template:\n{Template}", _getRelatedItemsTemplate);
 		_logger.LogDebug("User question: {UserQuestion}", userQuestion);
@@ -158,7 +182,8 @@ public class GeminiPromptConstructor : IPromptConstructor
 	}
 
 	public string BuildGenerateSuggestedMessagePrompt(
-		DataSpecification dataSpecification, string userQuestion, DataSpecificationSubstructure substructure, List<DataSpecificationItem> selectedItems)
+		DataSpecification dataSpecification, string userQuestion,
+		DataSpecificationSubstructure substructure, List<DataSpecificationItem> selectedItems)
 	{
 		_logger.LogDebug("Prompt template:\n{Template}", _generateSuggestedMessageTemplate);
 		_logger.LogDebug("User question: {UserQuestion}", userQuestion);
@@ -175,6 +200,13 @@ public class GeminiPromptConstructor : IPromptConstructor
 		_logger.LogDebug("Items to add to substructure:\n{SelectedItems}", selectedString);
 
 		return string.Format(_generateSuggestedMessageTemplate, dataSpecification.OwlContent, userQuestion, substructureString, selectedString);
+	}
+
+	public string BuildWelcomeMessageDataSpecificationSummaryPrompt(
+		DataSpecification dataSpecification)
+	{
+		_logger.LogDebug("Prompt template:\n{Template}", _welcomeMessageDataSpecificationSummaryTemplate);
+		return string.Format(_welcomeMessageDataSpecificationSummaryTemplate, dataSpecification.OwlContent);
 	}
 
 	private string SubstructureToJson(DataSpecificationSubstructure substructure)

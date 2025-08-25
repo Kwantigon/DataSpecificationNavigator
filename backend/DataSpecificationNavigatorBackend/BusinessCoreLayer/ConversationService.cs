@@ -3,6 +3,7 @@ using DataSpecificationNavigatorBackend.ConnectorsLayer;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
 using DataSpecificationNavigatorBackend.Model;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 using static DataSpecificationNavigatorBackend.Model.DataSpecificationSubstructure;
 
 namespace DataSpecificationNavigatorBackend.BusinessCoreLayer;
@@ -28,11 +29,52 @@ public class ConversationService(
 			DataSpecification = dataSpecification
 		};
 
+		int classesCount = await _database.DataSpecificationItems
+			.Select(item => item.Type == ItemType.Class)
+			.CountAsync();
+		int propertiesCount = await _database.DataSpecificationItems
+			.Select(item => item.Type == ItemType.ObjectProperty || item.Type == ItemType.DatatypeProperty)
+			.CountAsync();
+
+		string textContent = $"Your data specification has been loaded.\nIt contains {classesCount} classes and {propertiesCount} properties.";
+		string? dataSpecificationSummary = null;
+		List<string> suggestedClasses = new();
+		try
+		{
+			var llmResponse = await _llmConnector.GetDataSpecificationSummaryAndClassSuggestions(dataSpecification);
+			if (llmResponse is null)
+			{
+				textContent += "\nYou can start exploring by asking about any of the main classes in your specification.";
+			}
+			else
+			{
+				if (!string.IsNullOrWhiteSpace(llmResponse.Summary))
+				{
+					dataSpecificationSummary = llmResponse.Summary;
+				}
+
+
+				if (llmResponse.SuggestedClasses.Count > 0)
+				{
+					foreach (var suggestedClass in llmResponse.SuggestedClasses)
+					{
+						suggestedClasses.Add($"{suggestedClass.Label} ({suggestedClass.Reason})");
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			_logger.LogError(e, "An exception occurred while summarizing the data specification.");
+		}
+
 		WelcomeMessage welcomeMessage = new()
 		{
-			TextContent = "Your data specification has been loaded. What would you like to know?",
+			TextContent = textContent,
 			Timestamp = DateTime.Now,
-			Conversation = conversation
+			Conversation = conversation,
+			DataSpecificationSummary = dataSpecificationSummary,
+			SuggestedClasses = suggestedClasses
 		};
 		conversation.AddMessage(welcomeMessage);
 

@@ -1,4 +1,5 @@
 ﻿using DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
+using DataSpecificationNavigatorBackend.ConnectorsLayer.JsonDataClasses;
 using DataSpecificationNavigatorBackend.Model;
 using OllamaSharp;
 using System.Text;
@@ -223,6 +224,13 @@ public class OllamaConnector : ILlmConnector
 			return string.Empty;
 		}
 		return answer;
+	}
+
+	public async Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
+		DataSpecification dataSpecification)
+	{
+		await Task.CompletedTask;
+		return null;
 	}
 
 	private async Task<string> SendPromptAsync(string prompt)

@@ -212,8 +212,8 @@ public class ConversationController(
 					Id = message.Id,
 					Text = message.TextContent,
 					Timestamp = message.Timestamp,
-					DataSpecificationSummary = "To do: Add welcomeMessage.Summary",
-					SuggestedFirstMessage = "To do: Add welcomeMessage.SuggestedFirstMessage"
+					DataSpecificationSummary = welcomeMessage.DataSpecificationSummary,
+					SuggestedClasses = welcomeMessage.SuggestedClasses
 				};
 				break;
 			case UserMessage userMessage:
@@ -253,7 +253,6 @@ public class ConversationController(
 
 		SuggestionsTransformer transformer = new();
 		SuggestionsDTO suggestions = transformer.TransformSuggestedProperties(suggestedProperties, replyMessage.Conversation.DataSpecificationSubstructure);
-
 
 		// The assumption here is that the mapped phrases are unique.
 		// Which they should be, because the LLM is instructed to return unique phrases.

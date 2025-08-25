@@ -4,10 +4,10 @@ public record PropertySuggestionJson(
 	string Iri,
 	string Summary,
 	string Reason,
-	PropertySuggestionJson.Class DomainClass,
-	PropertySuggestionJson.Class RangeClass)
+	PropertySuggestionJson.ClassJson DomainClass,
+	PropertySuggestionJson.ClassJson RangeClass)
 {
-	public record Class(
+	public record ClassJson(
 		string Iri,
 		string Summary);
 }

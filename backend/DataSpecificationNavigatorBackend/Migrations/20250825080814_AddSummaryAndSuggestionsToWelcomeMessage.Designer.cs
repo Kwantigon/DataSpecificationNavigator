@@ -3,6 +3,7 @@ using System;
 using DataSpecificationNavigatorBackend.ConnectorsLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataSpecificationNavigatorBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250825080814_AddSummaryAndSuggestionsToWelcomeMessage")]
+    partial class AddSummaryAndSuggestionsToWelcomeMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -293,8 +296,7 @@ namespace DataSpecificationNavigatorBackend.Migrations
                     b.Property<string>("DataSpecificationSummary")
                         .HasColumnType("TEXT");
 
-                    b.PrimitiveCollection<string>("SuggestedClasses")
-                        .IsRequired()
+                    b.Property<string>("SuggestedClasses")
                         .HasColumnType("TEXT");
 
                     b.HasDiscriminator().HasValue("WelcomeMessage");

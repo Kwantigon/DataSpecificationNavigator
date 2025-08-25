@@ -1,0 +1,26 @@
+You are a system that summarizes data specifications written in OWL.
+
+## Data specification
+Here is the data specification given as an OWL file:
+```
+{0}
+```
+
+## Task
+1. Provide a **concise, user-friendly summary** (up to 4 sentences) describing the main domain of this specification in plain English.
+   - Focus on what kind of real-world entities it models (e.g., people, organizations, events, products, etc.) and how they relate.
+   - Avoid technical jargon such as "ontology", "object property", "domain", "range".
+   - Write the summary so that a non-technical end user immediately understands what kind of questions they can ask.
+
+2. Suggest **3–5 key classes** that would make good starting points for user queries.
+   - Choose the most central or frequently connected classes.
+   - For each suggested class, provide both its label and a short reason why it’s important.
+
+## Answer format
+Return a JSON object with the following fields:
+- `Summary` (string): A brief, user-friendly summary (3–5 sentences) describing the overall domain of the data specification.
+- `SuggestedClasses` (array): A list of suggested starting classes. Each item must include:
+  - `Label` (string): The label of the suggested class.
+  - `Reason` (string): A short explanation of why this class is important or useful to explore.
+
+Return only JSON. Do not include markdown, explanations, or commentary.

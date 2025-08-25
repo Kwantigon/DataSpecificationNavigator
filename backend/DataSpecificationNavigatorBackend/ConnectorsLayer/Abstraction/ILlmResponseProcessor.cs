@@ -1,4 +1,5 @@
-﻿using DataSpecificationNavigatorBackend.Model;
+﻿using DataSpecificationNavigatorBackend.ConnectorsLayer.JsonDataClasses;
+using DataSpecificationNavigatorBackend.Model;
 
 namespace DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
 
@@ -8,11 +9,17 @@ namespace DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
 /// </summary>
 public interface ILlmResponseProcessor
 {
-	List<DataSpecificationItemMapping>? ExtractMappedItems(string llmResponse, UserMessage userMessage);
+	List<DataSpecificationItemMapping>? ExtractMappedItems(
+		string llmResponse, UserMessage userMessage);
 
-	List<DataSpecificationPropertySuggestion>? ExtractSuggestedItems(string llmResponse, UserMessage userMessage);
+	List<DataSpecificationPropertySuggestion>? ExtractSuggestedItems(
+		string llmResponse, UserMessage userMessage);
 
 	string? ExtractSuggestedMessage(string llmResponse) => llmResponse;
 
-	List<DataSpecificationItemMapping>? ExtractSubstructureMapping(string llmResponse, UserMessage userMessage);
+	List<DataSpecificationItemMapping>? ExtractSubstructureMapping(
+		string llmResponse, UserMessage userMessage);
+
+	WelcomeMessageDataSpecificationSummaryJson? ExtractWelcomeMessageSummaryAndSuggestions(
+		string llmResponse);
 }

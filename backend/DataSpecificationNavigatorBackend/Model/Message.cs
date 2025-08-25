@@ -29,6 +29,10 @@ public enum MessageSource
 public class WelcomeMessage : Message
 {
 	public override MessageSource Sender { get => MessageSource.System; }
+
+	public string? DataSpecificationSummary { get; set; }
+
+	public List<string> SuggestedClasses { get; set; } = [];
 }
 
 public class UserMessage : Message

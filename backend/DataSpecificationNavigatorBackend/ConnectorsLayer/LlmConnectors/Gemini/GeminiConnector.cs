@@ -1,4 +1,5 @@
 ﻿using DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
+using DataSpecificationNavigatorBackend.ConnectorsLayer.JsonDataClasses;
 using DataSpecificationNavigatorBackend.Model;
 using GenerativeAI;
 
@@ -129,10 +130,21 @@ public class GeminiConnector : ILlmConnector
 		string prompt = _promptConstructor.BuildGenerateSuggestedMessagePrompt(
 			dataSpecification, userMessage.TextContent, substructure, selectedItems);
 
-		_logger.LogDebug("Prompting the LLM.");
-		string response = await SendPromptAsync(prompt);
-		_logger.LogDebug("LLM response: {Response}", response);
+		int attempts = 0;
+		string? response = null;
+		while (attempts < _retryAttempts && response is null)
+		{
+			_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
+			response = await SendPromptAsync(prompt);
+			_logger.LogDebug("LLM response: {Response}", response);
+			attempts++;
+		}
 
+		if (response is null)
+		{
+			_logger.LogError("The LLM response is still null after " + _retryAttempts + " attempts.");
+			return string.Empty;
+		}
 		string? itemSummary = _responseProcessor.ExtractSuggestedMessage(response);
 		if (itemSummary is null)
 		{
@@ -141,6 +153,37 @@ public class GeminiConnector : ILlmConnector
 		}
 
 		return itemSummary;
+	}
+
+	public async Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
+		DataSpecification dataSpecification)
+	{
+		_logger.LogDebug("Generating a summary and class suggestions for the first message.");
+		string prompt = _promptConstructor.BuildWelcomeMessageDataSpecificationSummaryPrompt(dataSpecification);
+		_logger.LogDebug("Prompting the LLM.");
+
+		int attempts = 0;
+		string? response = null;
+		while (attempts < _retryAttempts && response is null)
+		{
+			_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
+			response = await SendPromptAsync(prompt);
+			_logger.LogDebug("LLM response: {Response}", response);
+			attempts++;
+		}
+
+		if (response is null)
+		{
+			_logger.LogError("The LLM response is still null after " + _retryAttempts + " attempts.");
+			return null;
+		}
+		var result = _responseProcessor.ExtractWelcomeMessageSummaryAndSuggestions(response);
+		if (result is null)
+		{
+			_logger.LogError("Failed to extract the welcome message summary and class suggestions");
+			return null;
+		}
+		return result;
 	}
 
 	private async Task<string> SendPromptAsync(string prompt)

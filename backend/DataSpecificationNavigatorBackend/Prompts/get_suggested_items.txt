@@ -46,5 +46,5 @@ Return a JSON array. Each element in the array must be an object with the follow
 Do not suggest properties that are already in the current context.
 Suggest only properties that have either their domain or range class in the current context.
 If the question is not coherent or does not relate to the data specification in any way, return an empty JSON array.
-Do not include unrelated items.Do not include markdown, explanations, or commentary.
+Do not include unrelated items. Do not include markdown, explanations, or commentary.
 Return a **raw JSON array**, and nothing else.

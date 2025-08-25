@@ -32,10 +32,10 @@ public enum MessageDTOType
 public class WelcomeMessageDTO : MessageDTO
 {
 	[JsonPropertyName("dataSpecificationSummary")]
-	public required string DataSpecificationSummary { get; set; }
+	public string? DataSpecificationSummary { get; set; }
 
-	[JsonPropertyName("suggestedFirstMessage")]
-	public required string SuggestedFirstMessage { get; set; }
+	[JsonPropertyName("suggestedClasses")]
+	public List<string> SuggestedClasses { get; set; } = [];
 
 	public override MessageDTOType Type { get; set; } = MessageDTOType.WelcomeMessage;
 }
