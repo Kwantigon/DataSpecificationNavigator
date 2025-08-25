@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, FolderOpen/*, PlusCircle*/ } from "lucide-react";
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'; // Import Dialog components
-import { Input } from '@/components/ui/input'; 
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Import Dialog components
+import { Input } from "@/components/ui/input"; 
+import { Label } from "@/components/ui/label";
 
 const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 const LAST_CHOSEN_CONVERSATION_ID_STRING = "lastChosenConversationId";
@@ -100,9 +100,9 @@ function ConversationManagementPage() {
 			}
 
 			const response = await fetch(`${BACKEND_API_URL}/conversations`, {
-				method: 'POST',
+				method: "POST",
 				headers: {
-					'Content-Type': 'application/json',
+					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
 					conversationTitle: newConversationTitle,
@@ -138,8 +138,8 @@ function ConversationManagementPage() {
 			//handleOpenConversation(newConv.id);
 
 		} catch (err) {
-			console.error('Error creating new conversation:', err);
-			setNewConversationError("Sorry, there was an error while creating a conversation.");
+			console.error("Error creating new conversation:", err);
+			setNewConversationError("Sorry, there was an error while creating a conversation. Make sure the Dataspecer package you have chosen does contain a DSV or OWL.");
 		} finally {
 			setIsCreatingConversation(false);
 		}
@@ -292,7 +292,7 @@ function ConversationManagementPage() {
 									Creating conversation...
 								</span>
 							) : (
-								'Create conversation'
+								"Create conversation"
 							)}
 						</Button>
 					</DialogFooter>
