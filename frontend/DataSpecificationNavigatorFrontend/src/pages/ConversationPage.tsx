@@ -209,6 +209,7 @@ function ConversationPage() {
 
 	const [currentReplyMessage, setCurrentReplyMessage] = useState<ReplyMessage | null>(null);
 	const [currentUserMessage, setCurrentUserMessage] = useState<UserMessage | null>(null);
+	const [showCurrentUserMessage, setShowCurrentUserMessage] = useState(true);
 
 	const [mappedItemSelectedForSummary, setMappedItemSelectedForSummary] = useState<MappedItem | null>(null);
 	const [isMappedItemSummaryDialogOpen, setIsMappedItemSummaryDialogOpen] = useState<boolean>(false);
@@ -585,26 +586,39 @@ function ConversationPage() {
 
 				{/* Current user message */}
 				{currentUserMessage && (
-					<Card className="mt-4 bg-blue-50">
-						<CardContent>
-							{isSendingUserMessage ? (
-								// Current message as plain text.
-								<p className="text-gray-800">{currentUserMessage.text}</p>
-							) : (
-								// Current message with clickable parts.
-								<p className="text-gray-800">
-									{currentUserMessage && renderMessageWithMappedItems(
-										currentUserMessage.text,
-										currentReplyMessage?.mappedItems ?? [],
-										(mapped) => {
-											setMappedItemSelectedForSummary(mapped);
-											setIsMappedItemSummaryDialogOpen(true);
-										}
-									)}
-								</p>
-							)}
-						</CardContent>
-					</Card>
+					<div className="relative mt-4">
+						{showCurrentUserMessage && currentUserMessage && (
+							<Card className="bg-blue-50">
+								<CardContent>
+									<p className="text-gray-800">
+										{renderMessageWithMappedItems(
+											currentUserMessage.text,
+											currentReplyMessage?.mappedItems ?? [],
+											(mapped) => {
+												setMappedItemSelectedForSummary(mapped);
+												setIsMappedItemSummaryDialogOpen(true);
+											}
+										)}
+									</p>
+								</CardContent>
+							</Card>
+						)}
+
+						{/* Floating toggle button */}
+						<div className="absolute left-0 -bottom-4">
+							<Button
+								size="sm"
+								className={`bg-white text-blue-600
+														rounded-full shadow-lg border border-blue-300
+														${showCurrentUserMessage ? "opacity-55 hover:opacity-100" : "opacity-70"}
+														hover:bg-blue-50 hover:shadow-xl`}
+								onClick={() => setShowCurrentUserMessage(!showCurrentUserMessage)}
+							>
+								{showCurrentUserMessage ? "Hide your message" : "Show your message"}
+							</Button>
+						</div>
+					</div>
+
 				)}
 
 				{/* Input field and send message button */}
