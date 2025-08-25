@@ -118,7 +118,7 @@ public class SparqlTranslationService(
 
 		var sparql = new StringBuilder();
 		sparql.AppendLine("SELECT DISTINCT *");
-		sparql.Append("WHERE {");
+		sparql.AppendLine("WHERE {");
 
 		var visited = new HashSet<QueryNode>();
 		foreach (var root in graph.Roots)
@@ -164,7 +164,7 @@ public class SparqlTranslationService(
 			}
 			if (!string.IsNullOrWhiteSpace(datatypeNode.FilterExpression))
 			{
-				sparql.AppendLine($"{indent}  FILTER({datatypeNode.FilterExpression.Replace("{var}", datatypeNode.VariableName)})");
+				sparql.AppendLine($"{indent}  FILTER({datatypeNode.FilterExpression.Replace("{?var}", datatypeNode.VariableName)})");
 			}
 		}
 

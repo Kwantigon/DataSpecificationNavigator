@@ -34,9 +34,17 @@ public class Conversation
 		if (_messages.Count > 0)
 		{
 			Message lastMessage = _messages.Last();
+			// Ensure consistent timestamps.
 			if (lastMessage.Timestamp > message.Timestamp)
 			{
-				throw new ArgumentException("Message timestamp must be greater than the last message's timestamp.");
+				if (lastMessage.Timestamp < DateTime.Now)
+				{
+					message.Timestamp = DateTime.Now;
+				}
+				else
+				{
+					message.Timestamp = lastMessage.Timestamp.AddMinutes(1);
+				}
 			}
 		}
 		_messages.Add(message);

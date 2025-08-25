@@ -21,8 +21,8 @@ export interface Message {
 	type: "WelcomeMessage" | "UserMessage" | "ReplyMessage";
 }
 export interface WelcomeMessage extends Message {
-	dataSpecificationSummary: string;
-	suggestedFirstMessage: string;
+	dataSpecificationSummary?: string;
+	suggestedClasses?: string[];
 	type: "WelcomeMessage";
 }
 export interface UserMessage extends Message {

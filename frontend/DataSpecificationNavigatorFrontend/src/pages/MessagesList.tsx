@@ -32,8 +32,17 @@ function WelcomeMessageCard({ message }: { message: WelcomeMessage }) {
     <Card className="mb-4 bg-green-50">
       <CardContent className="p-4 space-y-2">
         <p className="text-gray-800">{message.text}</p>
-        <p className="text-gray-800">Summary: {message.dataSpecificationSummary}</p>
-        <p className="italic text-gray-500">Suggested: {message.suggestedFirstMessage}</p>
+        {message.dataSpecificationSummary && (<p className="text-gray-800">{message.dataSpecificationSummary}</p>)}
+        {(message.suggestedClasses && message.suggestedClasses.length > 0) && (
+          <p className="italic text-gray-500">
+            You may want to start by asking about:
+            <ul className="list-disc list-inside space-y-1">
+              {message.suggestedClasses.map((suggestedClass, index) => (
+                <li key={`initial-suggestion-${index}`}>{suggestedClass}</li>
+              ))}
+            </ul>
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -76,7 +85,7 @@ function ReplyMessageCard({
     const renderGroup = (group: GroupedSuggestions, keyPrefix: string) => (
       <div key={keyPrefix} className="ml-4 mt-2">
         <p className="text-sm font-medium italic">{group.itemExpanded}:</p>
-        <ul className="list-disc list-inside ml-4 mt-1">
+        <ul className="list-inside ml-4 mt-1">
           {group.suggestions.map((item) => {
             const existingSelection = selectedItemsForExpansion.find(
               (selected) => selected.iri === item.iri
@@ -84,32 +93,33 @@ function ReplyMessageCard({
             const isSelected = !!existingSelection;
             const isFromCurrentReply = message.id === currentReplyMessageId;
             return (
-              <li key={item.iri} className="flex items-center space-x-1">
-                {isFromCurrentReply && (<Checkbox
-                  checked={isSelected}
-                  onCheckedChange={(checked) =>
-                    onPropertyToggle(item, !!checked)
-                  }
-                  className="border-2 border-gray-700 data-[state=checked]:bg-gray-700"
-                />)}
-                <Button
-                  variant="link"
-                  onClick={() => onPropertyClick(item, message)}
-                  className="p-0 h-auto text-sm text-blue-600 underline cursor-pointer"
-                >
-                  {item.connection}
-                </Button>
-                {/* Extra options when selected */}
+              <li key={item.iri} className="mt-1">
+                <div className="flex items-center space-x-1">
+                  {isFromCurrentReply && (
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => onPropertyToggle(item, !!checked)}
+                      className="border-2 border-gray-700 data-[state=checked]:bg-gray-700"
+                    />
+                  )}
+                  <Button
+                    variant="link"
+                    onClick={() => onPropertyClick(item, message)}
+                    className="p-0 h-auto text-sm text-blue-600 underline cursor-pointer"
+                  >
+                    {item.connection}
+                  </Button>
+                </div>
+
+                {/* Extra options below suggestion */}
                 {isSelected && (
-                  <div className="ml-6 mt-2 space-y-2">
+                  <div className="ml-6 mt-2 space-y-2 mb-4">
                     {/* Optional toggle */}
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={existingSelection.isOptional}
                         onCheckedChange={(checked) =>
-                          onPropertyOptionsUpdate(item.iri, {
-                            isOptional: checked,
-                          })
+                          onPropertyOptionsUpdate(item.iri, { isOptional: checked })
                         }
                       />
                       <span className="text-xs text-gray-600">Mark as OPTIONAL</span>
@@ -117,8 +127,9 @@ function ReplyMessageCard({
 
                     {/* Filter expression input for datatype properties */}
                     {isDatatypeProperty(item) && (
-                      <Input className="w-fit"
-                        placeholder="Filter expression (e.g. {var} > 100)"
+                      <Input
+                        className="w-full max-w-md"
+                        placeholder="Filter expression. Use '{?var}' to refer to the variable. E. g., {?var} > 5"
                         value={existingSelection.filterExpression ?? ""}
                         onChange={(e) =>
                           onPropertyOptionsUpdate(item.iri, {
