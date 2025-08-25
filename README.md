@@ -66,3 +66,6 @@ The backend is running at `http://localhost:8080/backend-api`.
 
 You can try sending a GET requrest to `http://localhost:8080/backend-api/hello` to check that the backend is running.
 
+### Changing the application's port
+
+If instead of the default port 8080, you want the app to run on a different port, set the APP_PORT value in the .env file to your desired port.
