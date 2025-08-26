@@ -17,6 +17,10 @@ public abstract class DataSpecificationItem
 	public required int DataSpecificationId { get; set; } // For Entity Framework configuration.
 
 	public virtual required DataSpecification DataSpecification { get; set; }
+
+	public required string OwlAnnotation { get; set; } = string.Empty;
+
+	public required string RdfsComment { get; set; } = string.Empty;
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<ItemType>))]

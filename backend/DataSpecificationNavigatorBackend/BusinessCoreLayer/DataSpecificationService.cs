@@ -114,7 +114,9 @@ public class DataSpecificationService(
 				Label = clazz.Label,
 				Type = ItemType.Class,
 				DataSpecificationId = dataSpecification.Id,
-				DataSpecification = dataSpecification
+				DataSpecification = dataSpecification,
+				OwlAnnotation = clazz.AnnotationProperty ?? string.Empty,
+				RdfsComment = clazz.Comment ?? string.Empty
 			};
 			classItemsMap.Add(clazz.Iri, classItem);
 			itemsToAddToDb.Add(classItem);
@@ -163,7 +165,9 @@ public class DataSpecificationService(
 						RangeIri = rangeItem.Iri,
 						Range = rangeItem,
 						DataSpecificationId = dataSpecification.Id,
-						DataSpecification = dataSpecification
+						DataSpecification = dataSpecification,
+						OwlAnnotation = property.AnnotationProperty ?? string.Empty,
+						RdfsComment = property.Comment ?? string.Empty
 					};
 					itemsToAddToDb.Add(objectProperty);
 				}
@@ -188,7 +192,9 @@ public class DataSpecificationService(
 						Domain = domainItem,
 						RangeDatatypeIri = property.RangeIri,
 						DataSpecificationId = dataSpecification.Id,
-						DataSpecification = dataSpecification
+						DataSpecification = dataSpecification,
+						OwlAnnotation = property.AnnotationProperty ?? string.Empty,
+						RdfsComment = property.Comment ?? string.Empty
 					};
 					itemsToAddToDb.Add(datatypeProperty);
 				}
@@ -225,4 +231,8 @@ public record ItemInfoFromGraph
 	internal string? DomainIri { get; set; }
 
 	internal string? RangeIri { get; set; }
+
+	internal string? AnnotationProperty { get; set; }
+
+	internal string? Comment { get; set; }
 }

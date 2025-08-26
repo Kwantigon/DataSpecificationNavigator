@@ -3,7 +3,6 @@ using DataSpecificationNavigatorBackend.ConnectorsLayer;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
 using DataSpecificationNavigatorBackend.Model;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 using static DataSpecificationNavigatorBackend.Model.DataSpecificationSubstructure;
 
 namespace DataSpecificationNavigatorBackend.BusinessCoreLayer;
@@ -30,10 +29,10 @@ public class ConversationService(
 		};
 
 		int classesCount = await _database.DataSpecificationItems
-			.Select(item => item.Type == ItemType.Class)
+			.Where(item => item.Type == ItemType.Class)
 			.CountAsync();
 		int propertiesCount = await _database.DataSpecificationItems
-			.Select(item => item.Type == ItemType.ObjectProperty || item.Type == ItemType.DatatypeProperty)
+			.Where(item => item.Type == ItemType.ObjectProperty || item.Type == ItemType.DatatypeProperty)
 			.CountAsync();
 
 		string textContent = $"Your data specification has been loaded.\nIt contains {classesCount} classes and {propertiesCount} properties.";

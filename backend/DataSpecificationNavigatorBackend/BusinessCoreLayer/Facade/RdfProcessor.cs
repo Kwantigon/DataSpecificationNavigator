@@ -27,9 +27,11 @@ public class RdfProcessor(
 	private const string RDFS_DOMAIN = "http://www.w3.org/2000/01/rdf-schema#domain";
 	private const string RDFS_RANGE = "http://www.w3.org/2000/01/rdf-schema#range";
 	private const string RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label";
+	private const string RDFS_COMMENT = "http://www.w3.org/2000/01/rdf-schema#comment";
 	private const string OWL_CLASS = "http://www.w3.org/2002/07/owl#Class";
 	private const string OWL_OBJECT_PROPERTY = "http://www.w3.org/2002/07/owl#ObjectProperty";
 	private const string OWL_DATATYPE_PROPERTY = "http://www.w3.org/2002/07/owl#DatatypeProperty";
+	private const string OWL_ANNOTATION_PROPERTY = "http://www.w3.org/2002/07/owl#AnnotationProperty";
 
 	private readonly ILogger<RdfProcessor> _logger = logger;
 
@@ -138,13 +140,21 @@ public class RdfProcessor(
 						{
 							if (uriNodeToLookFor.Uri.ToString() == SKOS_PREF_LABEL)
 							{
-								string label = ((LiteralNode)reusedPropertyTriple.Object).Value;
-								owlGraph.Assert(subjectNode, owlGraph.CreateUriNode("rdfs:label"), owlGraph.CreateLiteralNode(label));
+								ILiteralNode literalNode = (LiteralNode)reusedPropertyTriple.Object;
+								owlGraph.Assert(
+									subjectNode,
+									owlGraph.CreateUriNode("rdfs:label"),
+									owlGraph.CreateLiteralNode(literalNode.Value, literalNode.Language)
+								);
 							}
 							if (uriNodeToLookFor.Uri.ToString() == SKOS_PREF_DEFINITION)
 							{
-								string definition = ((LiteralNode)reusedPropertyTriple.Object).Value;
-								owlGraph.Assert(subjectNode, owlGraph.CreateUriNode("owl:AnnotationProperty"), owlGraph.CreateLiteralNode(definition));
+								ILiteralNode literalNode = (LiteralNode)reusedPropertyTriple.Object;
+								owlGraph.Assert(
+									subjectNode,
+									owlGraph.CreateUriNode("owl:AnnotationProperty"),
+									owlGraph.CreateLiteralNode(literalNode.Value, literalNode.Language)
+								);
 							}
 						}
 					}
@@ -203,7 +213,7 @@ public class RdfProcessor(
 
 					if (predicateUri == RDFS_LABEL)
 					{
-						string label = ((LiteralNode)objectNode).Value;
+						ILiteralNode literalNode = (LiteralNode)objectNode;
 						itemsMap.TryGetValue(subjectUri, out ItemInfoFromGraph? itemInfo);
 						if (itemInfo is null)
 						{
@@ -211,7 +221,24 @@ public class RdfProcessor(
 							itemInfo.Iri = subjectUri;
 							itemsMap.Add(itemInfo.Iri, itemInfo);
 						}
-						itemInfo.Label = label;
+
+						// Prefer label values in English.
+						if (literalNode.Language == "en")
+						{
+							// If in English, override anything already present.
+							itemInfo.Label = literalNode.Value;
+						}
+						else
+						{
+							// Otherwise check if there is already a label present.
+							// This approach will guarantee English labels if they are present.
+							// If there are multiple labels but none of them in English,
+							// then the first one will be used.
+							if (itemInfo.Label is null)
+							{
+								itemInfo.Label = literalNode.Value;
+							}
+						}
 					}
 
 					if (predicateUri == RDFS_DOMAIN)
@@ -238,6 +265,61 @@ public class RdfProcessor(
 							itemsMap.Add(itemInfo.Iri, itemInfo);
 						}
 						itemInfo.RangeIri = objectUri;
+					}
+
+					if (predicateUri == RDFS_COMMENT)
+					{
+						ILiteralNode literalNode = ((LiteralNode)objectNode);
+						itemsMap.TryGetValue(subjectUri, out ItemInfoFromGraph? itemInfo);
+						if (itemInfo is null)
+						{
+							itemInfo = new ItemInfoFromGraph();
+							itemInfo.Iri = subjectUri;
+							itemsMap.Add(itemInfo.Iri, itemInfo);
+						}
+
+						// Prefer comment in English.
+						if (literalNode.Language == "en")
+						{
+							// If in English, override anything already present.
+							itemInfo.Comment = literalNode.Value;
+						}
+						else
+						{
+							// Otherwise check if there is already a comment present.
+							if (itemInfo.Comment is null)
+							{
+								itemInfo.Comment = literalNode.Value;
+							}
+						}
+					}
+
+					if (predicateUri == OWL_ANNOTATION_PROPERTY)
+					{
+						ILiteralNode literalNode = (LiteralNode)objectNode;
+						itemsMap.TryGetValue(subjectUri, out ItemInfoFromGraph? itemInfo);
+						if (itemInfo is null)
+						{
+							itemInfo = new ItemInfoFromGraph();
+							itemInfo.Iri = subjectUri;
+							itemsMap.Add(itemInfo.Iri, itemInfo);
+						}
+
+						// Prefer annotation values in English.
+						if (literalNode.Language == "en")
+						{
+							// If in English, override anything already present.
+							itemInfo.AnnotationProperty = literalNode.Value;
+						}
+						else
+						{
+							// Otherwise check if there is already an annotation present.
+							// (similar to labels)
+							if (itemInfo.AnnotationProperty is null)
+							{
+								itemInfo.AnnotationProperty = literalNode.Value;
+							}
+						}
 					}
 				}
 
