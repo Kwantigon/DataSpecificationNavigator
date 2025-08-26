@@ -2,9 +2,10 @@
 
 namespace DataSpecificationNavigatorBackend.Model;
 
-[PrimaryKey(nameof(PropertyDataSpecificationId), nameof(SuggestedPropertyIri), nameof(UserMessageId))]
 public class DataSpecificationPropertySuggestion
 {
+	public Guid Id { get; set; } = Guid.NewGuid();
+
 	public required int PropertyDataSpecificationId { get; set; }
 
 	public required string SuggestedPropertyIri { get; set; }

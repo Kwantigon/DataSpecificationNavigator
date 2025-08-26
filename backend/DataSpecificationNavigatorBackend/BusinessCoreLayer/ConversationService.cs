@@ -123,6 +123,7 @@ public class ConversationService(
 			// If the user message is not the same as the suggested message, then the user has modified the suggested message.
 			// In both cases, we need treat the user message as a completely new mesage and map it to the data specification items.
 			List<DataSpecificationItemMapping> mappings = await MapToDataSpecificationAsync(conversation.DataSpecification, userMessage);
+			RemoveDuplicateMappedWords(mappings);
 			mappingsCount = mappings.Count;
 			if (mappings.Count == 0)
 			{
@@ -251,6 +252,7 @@ public class ConversationService(
 					_logger.LogDebug("Mapping the user message to the conversation data specification substructure.");
 					List<DataSpecificationItemMapping> mappings = await MapToSubstructureAsync(
 						conversation.DataSpecification, conversation.DataSpecificationSubstructure, userMessage);
+					RemoveDuplicateMappedWords(mappings);
 
 					List<DataSpecificationItemMapping> manuallyMapped = [];
 					foreach (var itemAdded in itemsToAdd)
@@ -513,18 +515,23 @@ public class ConversationService(
 		return mappings;
 	}
 
-	private async Task<List<DataSpecificationPropertySuggestion>> GetSuggestionsAsync(DataSpecification dataSpecification, DataSpecificationSubstructure substructure, UserMessage userMessage)
+	private async Task<List<DataSpecificationPropertySuggestion>> GetSuggestionsAsync(
+		DataSpecification dataSpecification,
+		DataSpecificationSubstructure substructure,
+		UserMessage userMessage)
 	{
 		List<DataSpecificationPropertySuggestion> suggestedProperties = await _llmConnector.GetSuggestedPropertiesAsync(
 				userMessage.Conversation.DataSpecification, substructure, userMessage);
-		if (suggestedProperties.Count > 0)
+		if (suggestedProperties.Count < 5)
 		{
-			await _database.PropertySuggestions.AddRangeAsync(suggestedProperties);
+			_logger.LogWarning("{Count} properties suggested by the LLM.", suggestedProperties.Count);
+			_logger.LogInformation("Generating additional suggestions manually.");
+			List<DataSpecificationPropertySuggestion> manualSuggestions = GetManualSuggestions(
+				dataSpecification.Id, userMessage, substructure, suggestedProperties);
+			suggestedProperties.AddRange(manualSuggestions);
 		}
-		else
-		{
-			_logger.LogWarning("Failed to get property suggestions for the user message: \"{MessageText}\"", userMessage.TextContent);
-		}
+
+		await _database.PropertySuggestions.AddRangeAsync(suggestedProperties);
 		return suggestedProperties;
 	}
 
@@ -620,6 +627,204 @@ public class ConversationService(
 		_database.Entry(conversation)
 			.Property(c => c.DataSpecificationSubstructure)
 			.IsModified = true; // This triggers an update to the JSON column.
+	}
+
+	private void RemoveDuplicateMappedWords(List<DataSpecificationItemMapping> mappings)
+	{
+		HashSet<string> alreadySeen = [];
+		foreach (var mapping in mappings)
+		{
+			if (alreadySeen.Contains(mapping.MappedWords))
+			{
+				mapping.MappedWords = string.Empty;
+			}
+			else
+			{
+				alreadySeen.Add(mapping.MappedWords);
+			}
+		}
+	}
+
+	/// <summary>
+	/// In case the LLM fails to provide enough suggestions.
+	/// </summary>
+	/// <returns></returns>
+	private List<DataSpecificationPropertySuggestion> GetManualSuggestions(
+		int dataSpecificationId,
+		UserMessage userMessage,
+		DataSpecificationSubstructure substructure,
+		List<DataSpecificationPropertySuggestion> llmSuggestions)
+	{
+		List<DataSpecificationPropertySuggestion> manualSuggestions = [];
+
+		foreach (var classItem in substructure.ClassItems)
+		{
+			if (manualSuggestions.Count > 6)
+			{
+				break;
+			}
+
+			// Take only those object properties that do not have the same
+			// iri and range as in 'llmSuggestions'.
+			List<ObjectPropertyItem> classItemIsDomain = _database.ObjectPropertyItems
+				.Where(property => property.DataSpecificationId == dataSpecificationId &&
+												property.DomainIri == classItem.Iri)
+				.ToList(); // Bring to memory before the 2nd .Where() because I'm doing type casting.
+			classItemIsDomain = classItemIsDomain
+				.Where(property => !llmSuggestions
+												.Any(s => s.SuggestedPropertyIri == property.Iri &&
+																	s.SuggestedProperty.Type == ItemType.ObjectProperty &&
+																	((ObjectPropertyItem)s.SuggestedProperty).RangeIri == property.RangeIri))
+				.ToList();
+
+			// Take only those datatype properties that do not have the same
+			// iri and datatype as in 'llmSuggestions'.
+			List<DatatypePropertyItem> datatypeProperties = _database.DatatypePropertyItems
+				.Where(property => property.DataSpecificationId == dataSpecificationId &&
+												property.DomainIri == classItem.Iri)
+				.ToList();
+			datatypeProperties = datatypeProperties
+				.Where(property => !llmSuggestions
+												.Any(s => s.SuggestedPropertyIri == property.Iri &&
+																	s.SuggestedProperty.Type == ItemType.DatatypeProperty &&
+																	((DatatypePropertyItem)s.SuggestedProperty).RangeDatatypeIri == property.RangeDatatypeIri))
+				.ToList();
+
+			// Take only those object properties that do not have the same
+			// iri and domain as in 'llmSuggestions'.
+			List<ObjectPropertyItem> classItemIsRange = _database.ObjectPropertyItems
+				.Where(property => property.DataSpecificationId == dataSpecificationId &&
+												property.RangeIri == classItem.Iri)
+				.ToList();
+			classItemIsRange = classItemIsRange
+				.Where(property => !llmSuggestions
+												.Any(s => s.SuggestedPropertyIri == property.Iri &&
+																	s.SuggestedProperty.Type == ItemType.ObjectProperty &&
+																	((ObjectPropertyItem)s.SuggestedProperty).DomainIri == property.DomainIri))
+				.ToList();
+
+			// Pick 2 random property from each list, if possible.
+			const string reason = "This property was not suggested by the LLM. It was picked randomly.";
+			Random rng = new();
+			if (classItemIsDomain.Count > 0)
+			{
+				int index = rng.Next(0, classItemIsDomain.Count);
+				ObjectPropertyItem suggested = classItemIsDomain[index];
+				manualSuggestions.Add(new DataSpecificationPropertySuggestion()
+				{
+					PropertyDataSpecificationId = dataSpecificationId,
+					SuggestedPropertyIri = suggested.Iri,
+					UserMessageId = userMessage.Id,
+					SuggestedProperty = suggested,
+					UserMessage = userMessage,
+					ReasonForSuggestion = reason
+				});
+
+				if (classItemIsDomain.Count > 1)
+				{
+					// Pick the second suggestion.
+					// The property next to the previously suggested.
+					if (index == 0)
+					{
+						index = 1;
+					}
+					else
+					{
+						index--;
+					}
+					suggested = classItemIsDomain[index];
+					manualSuggestions.Add(new DataSpecificationPropertySuggestion()
+					{
+						PropertyDataSpecificationId = dataSpecificationId,
+						SuggestedPropertyIri = suggested.Iri,
+						UserMessageId = userMessage.Id,
+						SuggestedProperty = suggested,
+						UserMessage = userMessage,
+						ReasonForSuggestion = reason
+					});
+				}
+			}
+
+			if (classItemIsRange.Count > 0)
+			{
+				int index = rng.Next(0, classItemIsRange.Count);
+				ObjectPropertyItem suggested = classItemIsRange[index];
+				manualSuggestions.Add(new DataSpecificationPropertySuggestion()
+				{
+					PropertyDataSpecificationId = dataSpecificationId,
+					SuggestedPropertyIri = suggested.Iri,
+					UserMessageId = userMessage.Id,
+					SuggestedProperty = suggested,
+					UserMessage = userMessage,
+					ReasonForSuggestion = reason
+				});
+
+				if (classItemIsRange.Count > 1)
+				{
+					// Pick the second suggestion.
+					// The property next to the previously suggested.
+					if (index == 0)
+					{
+						index = 1;
+					}
+					else
+					{
+						index--;
+					}
+					suggested = classItemIsRange[index];
+					manualSuggestions.Add(new DataSpecificationPropertySuggestion()
+					{
+						PropertyDataSpecificationId = dataSpecificationId,
+						SuggestedPropertyIri = suggested.Iri,
+						UserMessageId = userMessage.Id,
+						SuggestedProperty = suggested,
+						UserMessage = userMessage,
+						ReasonForSuggestion = reason
+					});
+				}
+			}
+
+			if (datatypeProperties.Count > 0)
+			{
+				int index = rng.Next(0, datatypeProperties.Count);
+				DatatypePropertyItem suggested = datatypeProperties[index];
+				manualSuggestions.Add(new DataSpecificationPropertySuggestion()
+				{
+					PropertyDataSpecificationId = dataSpecificationId,
+					SuggestedPropertyIri = suggested.Iri,
+					UserMessageId = userMessage.Id,
+					SuggestedProperty = suggested,
+					UserMessage = userMessage,
+					ReasonForSuggestion = reason
+				});
+
+				if (datatypeProperties.Count > 1)
+				{
+					// Pick the second suggestion.
+					// The property next to the previously suggested.
+					if (index == 0)
+					{
+						index = 1;
+					}
+					else
+					{
+						index--;
+					}
+					suggested = datatypeProperties[index];
+					manualSuggestions.Add(new DataSpecificationPropertySuggestion()
+					{
+						PropertyDataSpecificationId = dataSpecificationId,
+						SuggestedPropertyIri = suggested.Iri,
+						UserMessageId = userMessage.Id,
+						SuggestedProperty = suggested,
+						UserMessage = userMessage,
+						ReasonForSuggestion = reason
+					});
+				}
+			}
+		}
+
+		return manualSuggestions;
 	}
 
 	#endregion Private methods
