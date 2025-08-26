@@ -8,20 +8,17 @@ public class QueryGraph
 
 	public List<QueryNode> Roots { get; } = new();
 
-	public QueryNode GetOrCreateNode(string iri, string label, bool isSelectTarget = false)
+	public QueryNode GetOrCreateNode(string iri, string label)
 	{
 		if (_nodesByIri.TryGetValue(iri, out var node))
 		{
-			if (isSelectTarget)
-				node.IsSelectTarget = true;
 			return node;
 		}
 
 		var newNode = new QueryNode
 		{
 			Iri = iri,
-			Label = label,
-			IsSelectTarget = isSelectTarget
+			Label = label
 		};
 
 		_nodesByIri[iri] = newNode;
@@ -36,8 +33,6 @@ public class QueryNode
 	public required string Iri { get; set; }
 
 	public required string Label { get; set; }
-
-	public bool IsSelectTarget { get; set; }
 
 	public List<QueryEdge> OutgoingEdges { get; set; } = new();
 
@@ -66,8 +61,6 @@ public class DatatypeNode
 	public required string Range { get; set; }
 
 	public bool IsOptional { get; set; }
-
-	public bool IsSelectTarget { get; set; }
 
 	public string? FilterExpression { get; set; }
 

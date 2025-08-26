@@ -50,7 +50,7 @@ public class SparqlTranslationService(
 		// Create all nodes.
 		foreach (DataSpecificationSubstructure.SubstructureClass classItem in substructure.ClassItems)
 		{
-			QueryNode node = graph.GetOrCreateNode(classItem.Iri, classItem.Label, classItem.IsSelectTarget);
+			QueryNode node = graph.GetOrCreateNode(classItem.Iri, classItem.Label);
 			nodeMap[node.Iri] = node;
 		}
 
@@ -85,7 +85,6 @@ public class SparqlTranslationService(
 					PropertyIri = datatypeProperty.Iri,
 					PropertyLabel = datatypeProperty.Label,
 					Range = datatypeProperty.Range,
-					IsSelectTarget = true,   // For now, we treat all datatype properties as select targets.
 					FilterExpression = datatypeProperty.FilterExpression,
 					IsOptional = datatypeProperty.IsOptional
 				});

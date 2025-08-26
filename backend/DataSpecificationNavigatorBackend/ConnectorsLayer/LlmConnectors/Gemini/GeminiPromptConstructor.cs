@@ -7,7 +7,7 @@ using System.Text.Unicode;
 
 namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 
-public class GeminiPromptConstructor : IPromptConstructor
+public class GeminiPromptConstructor : ILlmPromptConstructor
 {
 	private readonly ILogger<GeminiPromptConstructor> _logger;
 
@@ -24,7 +24,7 @@ public class GeminiPromptConstructor : IPromptConstructor
 	/// {1} = User question.<br/>
 	/// {2} = Current substructure (a list of items that the conversation has built).
 	/// </summary>
-	private readonly string _getRelatedItemsTemplate;
+	private readonly string _getSuggestedItemsTemplate;
 
 	/// <summary>
 	/// Has the following parameters:<br/>
@@ -97,7 +97,7 @@ public class GeminiPromptConstructor : IPromptConstructor
 		}
 		else
 		{
-			_getRelatedItemsTemplate = File.ReadAllText(templateFile);
+			_getSuggestedItemsTemplate = File.ReadAllText(templateFile);
 		}
 
 		string? generateSuggestedMessage = appSettings["Prompts:GenerateSuggestedMessage"];
@@ -168,17 +168,17 @@ public class GeminiPromptConstructor : IPromptConstructor
 		return string.Format(_dataSpecSubstructureItemsMappingTemplate, dataSpecification.OwlContent, userQuestion, substructureString);
 	}
 
-	public string BuildGetSuggestedItemsPrompt(
+	public string BuildGetSuggestedPropertiesPrompt(
 		DataSpecification dataSpecification, string userQuestion,
 		DataSpecificationSubstructure substructure)
 	{
-		_logger.LogDebug("Prompt template:\n{Template}", _getRelatedItemsTemplate);
+		_logger.LogDebug("Prompt template:\n{Template}", _getSuggestedItemsTemplate);
 		_logger.LogDebug("User question: {UserQuestion}", userQuestion);
 
 		// For suggestion prompt, give the substructure as a flattened JSON array so the LLM can more easily scan for candidate properties.
 		string substructureString = SubstructureToFlattenedJson(substructure);
 		_logger.LogDebug("Substructure:\n{Substructure}", substructureString);
-		return string.Format(_getRelatedItemsTemplate, dataSpecification.OwlContent, userQuestion, substructureString);
+		return string.Format(_getSuggestedItemsTemplate, dataSpecification.OwlContent, userQuestion, substructureString);
 	}
 
 	public string BuildGenerateSuggestedMessagePrompt(
@@ -202,7 +202,7 @@ public class GeminiPromptConstructor : IPromptConstructor
 		return string.Format(_generateSuggestedMessageTemplate, dataSpecification.OwlContent, userQuestion, substructureString, selectedString);
 	}
 
-	public string BuildWelcomeMessageDataSpecificationSummaryPrompt(
+	public string BuildDataSpecificationSummaryPrompt(
 		DataSpecification dataSpecification)
 	{
 		_logger.LogDebug("Prompt template:\n{Template}", _welcomeMessageDataSpecificationSummaryTemplate);
@@ -223,7 +223,6 @@ public class GeminiPromptConstructor : IPromptConstructor
 			{
 				Iri = classItem.Iri,
 				Label = classItem.Label,
-				IsSelectTarget = classItem.IsSelectTarget,
 				DatatypeProperties = null!,
 				ObjectProperties = null!,
 			});

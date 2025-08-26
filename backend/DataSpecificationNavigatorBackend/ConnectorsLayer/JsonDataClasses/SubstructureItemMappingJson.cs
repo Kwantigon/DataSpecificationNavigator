@@ -2,5 +2,4 @@
 
 public record SubstructureItemMappingJson(
 	string Iri,
-	string MappedWords = "",
-	bool IsSelectTarget = false);
+	string MappedWords = "");

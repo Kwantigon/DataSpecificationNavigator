@@ -44,7 +44,6 @@ public class GeminiResponseProcessor(
 				{
 					ItemIri = dataSpecItem.Iri,
 					MappedWords = jsonItem.MappedWords,
-					IsSelectTarget = jsonItem.IsSelectTarget,
 					ItemDataSpecificationId = dataSpecItem.DataSpecificationId,
 					UserMessageId = userMessage.Id,
 					Item = dataSpecItem,
@@ -89,7 +88,6 @@ public class GeminiResponseProcessor(
 				{
 					ItemIri = dataSpecItem.Iri,
 					MappedWords = jsonItem.MappedWords,
-					IsSelectTarget = jsonItem.IsSelectTarget,
 					ItemDataSpecificationId = dataSpecItem.DataSpecificationId,
 					UserMessageId = userMessage.Id,
 					Item = dataSpecItem,

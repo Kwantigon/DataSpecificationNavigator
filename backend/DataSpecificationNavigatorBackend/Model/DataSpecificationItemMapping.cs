@@ -16,6 +16,4 @@ public class DataSpecificationItemMapping
 	public virtual required UserMessage UserMessage { get; set; }
 
 	public required string MappedWords { get; set; }
-
-	public bool IsSelectTarget { get; set; } = false;
 }

@@ -151,7 +151,6 @@ public class ConversationController(
 						Conversation = conversation,
 						SelectedPropertyIri = selection.PropertyIri,
 						IsOptional = selection.IsOptional,
-						IsSelectTarget = selection.IsSelectTarget,
 						FilterExpression = selection.FilterExpression
 					};
 				}

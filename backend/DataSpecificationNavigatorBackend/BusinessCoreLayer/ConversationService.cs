@@ -148,7 +148,6 @@ public class ConversationService(
 							Item = property.Domain,
 							UserMessage = userMessage,
 							MappedWords = string.Empty, // Was not mapped directly from the user message.
-							IsSelectTarget = false // If it was not mapped directly, I guess it should not be a select target?
 						};
 						await _database.ItemMappings.AddAsync(mapping);
 						itemsToAdd.Add(property.Domain);
@@ -164,7 +163,6 @@ public class ConversationService(
 							Item = objectProperty.Range,
 							UserMessage = userMessage,
 							MappedWords = string.Empty, // Was not mapped directly from the user message.
-							IsSelectTarget = false // If it was not mapped directly, I guess it should not be a select target?
 						};
 						await _database.ItemMappings.AddAsync(mapping);
 						itemsToAdd.Add(objectProperty.Range);
@@ -506,11 +504,7 @@ public class ConversationService(
 				SubstructureClass classItem = new()
 				{
 					Iri = classToAdd.Iri,
-					Label = classToAdd.Label,
-					IsSelectTarget = true
-					// Currently not taking into account the IsSelectTarget output from the LLM.
-					// Because I feel like if the user adds an item,
-					// they implicitly want it as the select target.
+					Label = classToAdd.Label
 				};
 				substructure.ClassItems.Add(classItem);
 			}
@@ -567,7 +561,6 @@ public class ConversationService(
 					DomainLabel = datatypeProperty.Domain.Label,
 					Range = datatypeProperty.RangeDatatypeIri,
 					RangeLabel = rangeLabel,
-					IsSelectTarget = userSelection?.IsSelectTarget ?? true,
 					FilterExpression = userSelection?.FilterExpression,
 					IsOptional = userSelection?.IsOptional ?? false
 				});

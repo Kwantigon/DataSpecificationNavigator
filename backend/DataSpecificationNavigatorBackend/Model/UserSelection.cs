@@ -12,7 +12,5 @@ public class UserSelection
 
 	public bool IsOptional { get; set; } = false;
 
-	public bool IsSelectTarget { get; set; } = false;
-
 	public string? FilterExpression { get; set; }
 }

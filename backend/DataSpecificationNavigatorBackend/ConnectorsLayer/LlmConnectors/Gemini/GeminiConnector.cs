@@ -8,7 +8,7 @@ namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini
 public class GeminiConnector : ILlmConnector
 {
 	private readonly ILogger<GeminiConnector> _logger;
-	private readonly IPromptConstructor _promptConstructor;
+	private readonly ILlmPromptConstructor _promptConstructor;
 	private readonly ILlmResponseProcessor _responseProcessor;
 	private const int _retryAttempts = 3; // If the response processor fails to extract the necessary classes, retry the prompt this many times.
 	private GenerativeModel? _gemini;
@@ -21,7 +21,7 @@ public class GeminiConnector : ILlmConnector
 	public GeminiConnector(
 		ILogger<GeminiConnector> logger,
 		IConfiguration appSettings,
-		IPromptConstructor promptConstructor,
+		ILlmPromptConstructor promptConstructor,
 		ILlmResponseProcessor responseProcessor)
 	{
 		_logger = logger;
@@ -104,7 +104,7 @@ public class GeminiConnector : ILlmConnector
 
 		int attempts = 0;
 		List<DataSpecificationPropertySuggestion>? suggestedItems = null;
-		string prompt = _promptConstructor.BuildGetSuggestedItemsPrompt(dataSpecification, userMessage.TextContent, substructure);
+		string prompt = _promptConstructor.BuildGetSuggestedPropertiesPrompt(dataSpecification, userMessage.TextContent, substructure);
 		while (attempts < _retryAttempts && suggestedItems is null)
 		{
 			_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
@@ -159,7 +159,7 @@ public class GeminiConnector : ILlmConnector
 		DataSpecification dataSpecification)
 	{
 		_logger.LogDebug("Generating a summary and class suggestions for the first message.");
-		string prompt = _promptConstructor.BuildWelcomeMessageDataSpecificationSummaryPrompt(dataSpecification);
+		string prompt = _promptConstructor.BuildDataSpecificationSummaryPrompt(dataSpecification);
 		_logger.LogDebug("Prompting the LLM.");
 
 		int attempts = 0;

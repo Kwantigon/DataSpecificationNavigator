@@ -18,8 +18,6 @@ public class DataSpecificationSubstructure
 		public List<SubstructureObjectProperty> ObjectProperties { get; set; } = [];
 
 		public List<SubstructureDatatypeProperty> DatatypeProperties { get; set; } = [];
-
-		public required bool IsSelectTarget { get; set; } = false;
 	}
 
 	public class SubstructureObjectProperty
@@ -54,8 +52,6 @@ public class DataSpecificationSubstructure
 		public required string RangeLabel { get; set; }
 
 		public bool IsOptional { get; set; } = false;
-
-		public bool IsSelectTarget { get; set; } = false;
 
 		public string? FilterExpression { get; set; }
 	}
