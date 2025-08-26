@@ -1,7 +1,7 @@
 You are assisting me in exploring a data specification.
 
 ### Specification subset
-Here is the relevant part of the specification, grouped by class:
+Here is the JSON array containing the relevant subset of the data specification:
 
 {0}
 

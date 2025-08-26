@@ -258,9 +258,9 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 	private string SerializeSubstructureProximity(
 		DataSpecification dataSpecification,
 		List<ClassItem> currentClasses,
-		int maxHops = 3)
+		int maxHops = 1)
 	{
-		List<Object> classesList = new(); // List of anonymous objects.
+		List<Object> itemsList = new(); // List of anonymous objects.
 
 		int currentHops = 0;
 		List<ClassItem> classesToIterate = currentClasses;
@@ -270,11 +270,22 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 			List<ClassItem> nextIteration = [];
 			foreach (ClassItem classItem in classesToIterate)
 			{
+				itemsList.Add(new
+				{
+					classItem.Iri,
+					classItem.Label,
+					Type = "Class",
+					classItem.OwlAnnotation,
+					classItem.RdfsComment
+				});
+				alreadyAdded.Add(classItem.Iri);
+
 				// ObjectProperties, where the current class is the domain.
 				List<ObjectPropertyItem> classItemIsDomain = _database.ObjectPropertyItems
 				.Where(item => item.DataSpecificationId == dataSpecification.Id &&
 												item.DomainIri == classItem.Iri)
 				.ToList();
+				// Add the property and remember the range class to process in the next hop.
 				foreach (ObjectPropertyItem property in classItemIsDomain)
 				{
 					if (!alreadyAdded.Contains(property.RangeIri) &&
@@ -282,6 +293,17 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 					{
 						nextIteration.Add(property.Range);
 					}
+
+					itemsList.Add(new
+					{
+						property.Iri,
+						property.Label,
+						Type = "ObjectProperty",
+						property.OwlAnnotation,
+						property.RdfsComment,
+						Domain = property.DomainIri,
+						Range = property.RangeIri
+					});
 				}
 
 				// ObjectProperties, where the current class is the range.
@@ -289,6 +311,7 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 					.Where(item => item.DataSpecificationId == dataSpecification.Id &&
 													item.RangeIri == classItem.Iri)
 					.ToList();
+				// Add the property and remember the domain class to process in the next hop.
 				foreach (ObjectPropertyItem property in classItemIsRange)
 				{
 					if (!alreadyAdded.Contains(property.DomainIri) &&
@@ -296,71 +319,61 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 					{
 						nextIteration.Add(property.Domain);
 					}
+
+					itemsList.Add(new
+					{
+						property.Iri,
+						property.Label,
+						Type = "ObjectProperty",
+						property.OwlAnnotation,
+						property.RdfsComment,
+						Domain = property.DomainIri,
+						Range = property.RangeIri
+					});
 				}
 
+				// DatatypeProperties, where the current class is the domain.
 				List<DatatypePropertyItem> datatypeProperties = _database.DatatypePropertyItems
 					.Where(item => item.DataSpecificationId == dataSpecification.Id &&
 													item.DomainIri == classItem.Iri)
 					.ToList();
 
-				classesList.Add(new
+				foreach (DatatypePropertyItem property in datatypeProperties)
 				{
-					classItem.Iri,
-					classItem.Label,
-					Type = "Class",
-					classItem.OwlAnnotation,
-					classItem.RdfsComment,
-					ObjectProperties = classItemIsDomain
-						.Select(objProperty => new
-						{
-							objProperty.Iri,
-							objProperty.Label,
-							Type = "ObjectProperty",
-							objProperty.DomainIri,
-							objProperty.RangeIri,
-							objProperty.OwlAnnotation,
-							objProperty.RdfsComment
-						})
-						.ToList(),
-					DatatypeProperties = datatypeProperties
-						.Select(dtProperty => new
-						{
-							dtProperty.Iri,
-							dtProperty.Label,
-							Type = "DatatypeProperty",
-							dtProperty.DomainIri,
-							Datatype = dtProperty.RangeDatatypeIri,
-							dtProperty.OwlAnnotation,
-							dtProperty.RdfsComment
-						})
-						.ToList()
-				});
-
-				alreadyAdded.Add(classItem.Iri);
+					itemsList.Add(new
+					{
+						property.Iri,
+						property.Label,
+						Type = "DatatypeProperty",
+						property.OwlAnnotation,
+						property.RdfsComment,
+						Domain = property.DomainIri,
+						Range = property.RangeDatatypeIri
+					});
+				}
 			}
 			classesToIterate = nextIteration;
 			currentHops++;
 		}
 
-		// 'classesToIterate contains ranges and domains to be processed in the next hop.
+		// After the main loop, 'classesToIterate' contains
+		// ranges and domains to be processed in the next hop.
 		// Add those classes so that I don't have dangling references.
 		foreach (ClassItem classItem in classesToIterate)
 		{
-			classesList.Add(new
+			itemsList.Add(new
 			{
 				classItem.Iri,
 				classItem.Label,
 				Type = "Class",
 				classItem.OwlAnnotation,
-				classItem.RdfsComment,
-				ObjectProperties = new List<Object>(),
-				DatatypeProperties = new List<Object>()
+				classItem.RdfsComment
 			});
 
 			alreadyAdded.Add(classItem.Iri);
 		}
 
-		return JsonSerializer.Serialize(classesList, _jsonSerializerOptions);
+		return JsonSerializer.Serialize(itemsList, _jsonSerializerOptions);
 	}
 
 	private string SerializeSubstructureFlattened(DataSpecificationSubstructure substructure)
