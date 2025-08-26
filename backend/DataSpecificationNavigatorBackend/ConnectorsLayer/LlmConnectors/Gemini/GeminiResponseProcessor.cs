@@ -198,6 +198,38 @@ public class GeminiResponseProcessor(
 		}
 	}
 
+	public void ExtractDataSpecificationItemSummaries(
+		string llmResponse,
+		List<ClassItem> dataSpecificationItems)
+	{
+		llmResponse = RemoveBackticks(llmResponse.Trim());
+		try
+		{
+			List<DataSpecItemSummaryJson>? jsonData = JsonSerializer.Deserialize<List<DataSpecItemSummaryJson>>(llmResponse);
+			if (jsonData is null)
+			{
+				_logger.LogError("The result of the JSON deserialization is null.");
+				return;
+			}
+
+			foreach (DataSpecItemSummaryJson jsonItem in jsonData)
+			{
+				ClassItem? item = dataSpecificationItems.Find(i => i.Iri == jsonItem.Iri);
+				if (item is null)
+				{
+					_logger.LogError("Could not find item {Iri} in the data spec items list.", jsonItem.Iri);
+					continue;
+				}
+
+				item.Summary = jsonItem.Summary;
+			}
+		}
+		catch (Exception e)
+		{
+			_logger.LogError(e, "An exception occured while deserializing the summaries from JSON.");
+		}
+	}
+
 	private string RemoveBackticks(string llmResponse)
 	{
 		if (llmResponse.StartsWith("```json"))

@@ -186,6 +186,33 @@ public class GeminiConnector : ILlmConnector
 		return result;
 	}
 
+	public async Task GenerateItemSummaries(
+		DataSpecification dataSpecification,
+		List<ClassItem> dataSpecificationItems)
+	{
+		string prompt = _promptConstructor.BuildItemsSummaryPrompt(dataSpecification, dataSpecificationItems);
+		int attempts = 0;
+		string? response = null;
+		while (attempts < _retryAttempts && string.IsNullOrWhiteSpace(response))
+		{
+			try
+			{
+				_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
+				response = await SendPromptAsync(prompt);
+				_logger.LogDebug("LLM response: {Response}", response);
+				if (!string.IsNullOrWhiteSpace(response))
+					_responseProcessor.ExtractDataSpecificationItemSummaries(response, dataSpecificationItems);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occured while prompting the LLM.");
+				response = null;
+			}
+
+			attempts++;
+		}
+	}
+
 	private async Task<string> SendPromptAsync(string prompt)
 	{
 		if (_gemini is null)
@@ -194,11 +221,5 @@ public class GeminiConnector : ILlmConnector
 		}
 		var response = await _gemini.GenerateContentAsync(prompt);
 		return response.Text;
-	}
-
-	public async Task<string> GenerateItemSummaryAsync(DataSpecificationItem dataSpecificationItem)
-	{
-		await Task.CompletedTask;
-		return "Item summary generation is deprecated.";
 	}
 }

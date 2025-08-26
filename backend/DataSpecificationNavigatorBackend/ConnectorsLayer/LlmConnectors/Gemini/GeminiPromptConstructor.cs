@@ -49,6 +49,8 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 	/// </summary>
 	private readonly string _welcomeMessageDataSpecificationSummaryTemplate;
 
+	private readonly string _summarizeItemsTemplate;
+
 	private readonly JsonSerializerOptions _jsonSerializerOptions;
 
 	public GeminiPromptConstructor(
@@ -64,16 +66,16 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 		};
 
 		#region Load templates from files
-		string? baseDirectory = appSettings["Prompts:BaseDirectory"];
+		string? baseDirectory = appSettings["Llm:Gemini:Prompts:BaseDirectory"];
 		if (baseDirectory is null)
 		{
-			throw new Exception("The key Prompts:BaseDirectory is missing in the config file.");
+			throw new Exception("The key Llm:Gemini:Prompts:BaseDirectory is missing in the config file.");
 		}
 
-		string? itemsMapping = appSettings["Prompts:ItemsMapping"];
+		string? itemsMapping = appSettings["Llm:Gemini:Prompts:ItemsMapping"];
 		if (itemsMapping is null)
 		{
-			throw new Exception("The key Prompts:ItemsMapping is missing in the config file.");
+			throw new Exception("The key Llm:Gemini:Prompts:ItemsMapping is missing in the config file.");
 		}
 		string templateFile = Path.Combine(baseDirectory, itemsMapping);
 		if (!File.Exists(templateFile))
@@ -85,10 +87,10 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 			_itemsMappingTemplate = File.ReadAllText(templateFile);
 		}
 
-		string? getRelatedItems = appSettings["Prompts:GetRelatedItems"];
+		string? getRelatedItems = appSettings["Llm:Gemini:Prompts:GetRelatedItems"];
 		if (getRelatedItems is null)
 		{
-			throw new Exception("The key Prompts:GetRelatedItems is missing in the config file.");
+			throw new Exception("The key Llm:Gemini:Prompts:GetRelatedItems is missing in the config file.");
 		}
 		templateFile = Path.Combine(baseDirectory, getRelatedItems);
 		if (!File.Exists(templateFile))
@@ -100,10 +102,10 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 			_getSuggestedItemsTemplate = File.ReadAllText(templateFile);
 		}
 
-		string? generateSuggestedMessage = appSettings["Prompts:GenerateSuggestedMessage"];
+		string? generateSuggestedMessage = appSettings["Llm:Gemini:Prompts:GenerateSuggestedMessage"];
 		if (generateSuggestedMessage is null)
 		{
-			throw new Exception("The key Prompts:GenerateSuggestedMessage is missing in the config file.");
+			throw new Exception("The key Llm:Gemini:Prompts:GenerateSuggestedMessage is missing in the config file.");
 		}
 		templateFile = Path.Combine(baseDirectory, generateSuggestedMessage);
 		if (!File.Exists(templateFile))
@@ -115,10 +117,10 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 			_generateSuggestedMessageTemplate = File.ReadAllText(templateFile);
 		}
 
-		string? substructureItemMapping = appSettings["Prompts:DataSpecSubstructureItemsMapping"];
+		string? substructureItemMapping = appSettings["Llm:Gemini:Prompts:DataSpecSubstructureItemsMapping"];
 		if (substructureItemMapping is null)
 		{
-			throw new Exception("The key Prompts:DataSpecSubstructureItemsMapping is missing in the config file.");
+			throw new Exception("The key Llm:Gemini:Prompts:DataSpecSubstructureItemsMapping is missing in the config file.");
 		}
 		templateFile = Path.Combine(baseDirectory, substructureItemMapping);
 		if (!File.Exists(templateFile))
@@ -130,10 +132,10 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 			_dataSpecSubstructureItemsMappingTemplate = File.ReadAllText(templateFile);
 		}
 
-		string? welcomeMessageDataSpecificationSummary = appSettings["Prompts:WelcomeMessageDataSpecificationSummary"];
+		string? welcomeMessageDataSpecificationSummary = appSettings["Llm:Gemini:Prompts:WelcomeMessageDataSpecificationSummary"];
 		if (welcomeMessageDataSpecificationSummary is null)
 		{
-			throw new Exception("The key Prompts:WelcomeMessageDataSpecificationSummary is missing in the config file.");
+			throw new Exception("The key Llm:Gemini:Prompts:WelcomeMessageDataSpecificationSummary is missing in the config file.");
 		}
 		templateFile = Path.Combine(baseDirectory, welcomeMessageDataSpecificationSummary);
 		if (!File.Exists(templateFile))
@@ -143,6 +145,21 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 		else
 		{
 			_welcomeMessageDataSpecificationSummaryTemplate = File.ReadAllText(templateFile);
+		}
+
+		string? summarizeItems = appSettings["Llm:Gemini:Prompts:SummarizeDataSpecItems"];
+		if (summarizeItems is null)
+		{
+			throw new Exception("The key Llm:Gemini:Prompts:SummarizeDataSpecItems is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, summarizeItems);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist.");
+		}
+		else
+		{
+			_summarizeItemsTemplate = File.ReadAllText(templateFile);
 		}
 		#endregion Load templates from files
 	}
@@ -232,5 +249,13 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 		}
 
 		return JsonSerializer.Serialize(flattenedSubstructure, _jsonSerializerOptions);
+	}
+
+	public string BuildItemsSummaryPrompt(DataSpecification dataSpecification, List<ClassItem> dataSpecificationItems)
+	{
+		var items = dataSpecificationItems.Select(i => new { i.Iri, i.Label, i.Type, i.OwlAnnotation, i.RdfsComment });
+		string itemsListJson = JsonSerializer.Serialize(items, _jsonSerializerOptions);
+
+		return string.Format(_summarizeItemsTemplate, dataSpecification.OwlContent, itemsListJson);
 	}
 }

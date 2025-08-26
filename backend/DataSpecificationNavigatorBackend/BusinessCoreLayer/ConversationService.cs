@@ -115,6 +115,7 @@ public class ConversationService(
 		await _database.UserMessages.AddAsync(userMessage);
 
 		// Map the user message to the data specification items.
+		int mappingsCount = 0; // Will use this later to decide whether to generate suggestions or not.
 		if (string.IsNullOrWhiteSpace(conversation.SuggestedMessage) ||
 				userMessage.TextContent.ToLower() != conversation.SuggestedMessage.ToLower())
 		{
@@ -122,6 +123,7 @@ public class ConversationService(
 			// If the user message is not the same as the suggested message, then the user has modified the suggested message.
 			// In both cases, we need treat the user message as a completely new mesage and map it to the data specification items.
 			List<DataSpecificationItemMapping> mappings = await MapToDataSpecificationAsync(conversation.DataSpecification, userMessage);
+			mappingsCount = mappings.Count;
 			if (mappings.Count == 0)
 			{
 				_logger.LogError("No suitable data specification items found for the question mapping.");
@@ -136,8 +138,10 @@ public class ConversationService(
 				// In the ideal case, 'itemsToAdd' contains mapped classes, properties, and all their domains and ranges.
 				// But since it is an output from the LLM, it might not be complete.
 				// Add missing domains and ranges.
+				List<ClassItem> missingClasses = [];
 				foreach (PropertyItem property in itemsToAdd.OfType<PropertyItem>())
 				{
+					// Check for missing domain.
 					if (!itemsToAdd.Any(item => item.Iri == property.DomainIri))
 					{
 						DataSpecificationItemMapping mapping = new()
@@ -150,8 +154,10 @@ public class ConversationService(
 							MappedWords = string.Empty, // Was not mapped directly from the user message.
 						};
 						await _database.ItemMappings.AddAsync(mapping);
-						itemsToAdd.Add(property.Domain);
+						missingClasses.Add(property.Domain);
 					}
+
+					// Check for missing range.
 					if (property is ObjectPropertyItem objectProperty &&
 							!itemsToAdd.Any(item => item.Iri == objectProperty.RangeIri))
 					{
@@ -165,10 +171,12 @@ public class ConversationService(
 							MappedWords = string.Empty, // Was not mapped directly from the user message.
 						};
 						await _database.ItemMappings.AddAsync(mapping);
-						itemsToAdd.Add(objectProperty.Range);
+						missingClasses.Add(objectProperty.Range);
 					}
 				}
-				// To do: Need a summary for the extra added domains and ranges.
+				
+				await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, missingClasses);
+				itemsToAdd.AddRange(missingClasses);
 
 				AddDataSpecItemsToConversationSubstructure(conversation, itemsToAdd, []); // No user selections at this point, so passing an empty list.
 			}
@@ -179,8 +187,7 @@ public class ConversationService(
 			if (conversation.UserSelections.Count == 0)
 			{
 				_logger.LogError("User sent the suggested message but there are no items for expansion selected by the user in the conversation.");
-				// Just do nothing, I think.
-				// To do: Generate a reply message saying that no items were selected. The user should try again.
+				// Just do nothing.
 			}
 			else
 			{
@@ -236,15 +243,44 @@ public class ConversationService(
 					_logger.LogDebug("Mapping the user message to the conversation data specification substructure.");
 					List<DataSpecificationItemMapping> mappings = await MapToSubstructureAsync(
 						conversation.DataSpecification, conversation.DataSpecificationSubstructure, userMessage);
+
+					List<DataSpecificationItemMapping> manuallyMapped = [];
+					foreach (var itemAdded in itemsToAdd)
+					{
+						if (!mappings.Any(m => m.ItemIri == itemAdded.Iri))
+						{
+							// LLM didn't map a substructure item to words.
+							// Manually add the mapping with empty MappedWords to ensure everything still works.
+							DataSpecificationItemMapping newMapping = new()
+							{
+								ItemDataSpecificationId = itemAdded.DataSpecificationId,
+								ItemIri = itemAdded.Iri,
+								UserMessageId = userMessage.Id,
+								Item = itemAdded,
+								UserMessage = userMessage,
+								MappedWords = string.Empty
+							};
+							manuallyMapped.Add(newMapping);
+						}
+					}
+					if (manuallyMapped.Count > 0)
+					{
+						await _database.AddRangeAsync(manuallyMapped);
+					}
+
+					mappingsCount = mappings.Count + manuallyMapped.Count;
 				}
 			}
 		}
 
-		// Get suggestions for the user message.
-		List<DataSpecificationPropertySuggestion> suggestions = await GetSuggestionsAsync(
-			conversation.DataSpecification, conversation.DataSpecificationSubstructure, userMessage);
-		_logger.LogInformation("The LLM suggested the following properties: [{SuggestedProperties}]",
-			suggestions.Select(s => s.SuggestedProperty.Label));
+		if (mappingsCount > 0)
+		{
+			// Get suggestions for the user message.
+			List<DataSpecificationPropertySuggestion> suggestions = await GetSuggestionsAsync(
+				conversation.DataSpecification, conversation.DataSpecificationSubstructure, userMessage);
+			_logger.LogInformation("The LLM suggested the following properties: [{SuggestedProperties}]",
+				suggestions.Select(s => s.SuggestedProperty.Label));
+		}
 
 		conversation.UserSelections.Clear();
 		conversation.SuggestedMessage = null;
