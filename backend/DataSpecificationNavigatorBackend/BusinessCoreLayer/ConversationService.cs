@@ -180,8 +180,8 @@ public class ConversationService(
 				{
 					await _database.ItemMappings.AddRangeAsync(manuallyMapped);
 
-					List<ClassItem> missingClasses = manuallyMapped
-						.Select(m => (ClassItem)m.Item)
+					List<DataSpecificationItem> missingClasses = manuallyMapped
+						.Select(m => m.Item)
 						.ToList();
 					await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, missingClasses);
 					itemsToAdd.AddRange(missingClasses);
@@ -289,7 +289,34 @@ public class ConversationService(
 			List<DataSpecificationPropertySuggestion> suggestions = await GetSuggestionsAsync(
 				conversation.DataSpecification, conversation.DataSpecificationSubstructure, userMessage);
 			_logger.LogInformation("The LLM suggested the following properties: [{SuggestedProperties}]",
-				suggestions.Select(s => s.SuggestedProperty.Label));
+																								suggestions.Select(s => s.SuggestedProperty.Label));
+
+			List<DataSpecificationItem> itemsWithoutSummary = [];
+			foreach (var suggestion in suggestions)
+			{
+				if (string.IsNullOrWhiteSpace(suggestion.SuggestedProperty.Summary))
+				{
+					itemsWithoutSummary.Add(suggestion.SuggestedProperty);
+
+					var domainItem = suggestion.SuggestedProperty.Domain;
+					if (string.IsNullOrWhiteSpace(domainItem.Summary) &&
+							!itemsWithoutSummary.Any(i => i.Iri == domainItem.Iri))
+					{
+						itemsWithoutSummary.Add(domainItem);
+					}
+
+					if (suggestion.SuggestedProperty is ObjectPropertyItem objectProperty)
+					{
+						var rangeItem = objectProperty.Range;
+						if (string.IsNullOrWhiteSpace(rangeItem.Summary) &&
+								!itemsWithoutSummary.Any(i => i.Iri == rangeItem.Iri))
+						{
+							itemsWithoutSummary.Add(rangeItem);
+						}
+					}
+				}
+			}
+			await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, itemsWithoutSummary);
 		}
 
 		conversation.UserSelections.Clear();
