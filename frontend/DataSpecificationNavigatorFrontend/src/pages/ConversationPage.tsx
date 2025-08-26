@@ -585,7 +585,7 @@ function ConversationPage() {
 				)}
 
 				{/* Current user message */}
-				{currentUserMessage && (
+				{!isSendingUserMessage && currentUserMessage && (
 					<div className="relative mt-4">
 						{showCurrentUserMessage && currentUserMessage && (
 							<Card className="bg-blue-50">
@@ -658,7 +658,7 @@ function ConversationPage() {
 							{dataSpecificationSubstructure.classItems.map((classItem) => (
 								<div key={classItem.iri} className="p-3 border-l-4 border-blue-500 bg-white shadow-sm rounded-md">
 									<h3 className="text-base font-semibold text-blue-800">{classItem.label}</h3>
-									<p className="text-sm text-gray-500 mb-2 break-words">{`(${classItem.iri})`}</p>
+									<p className="text-[10px] text-gray-400 mb-2 break-words">{`(${classItem.iri})`}</p>
 									{classItem.objectProperties.length > 0 && (
 										<div className="mt-2">
 											<h4 className="text-sm font-medium text-gray-700">Object properties:</h4>
