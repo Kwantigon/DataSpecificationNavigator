@@ -5,7 +5,7 @@ import { Trash2, FolderOpen/*, PlusCircle*/ } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Import Dialog components
-import { Input } from "@/components/ui/input"; 
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL;
@@ -31,6 +31,7 @@ function ConversationManagementPage() {
 	const [showNoConversationSelectedMessage, setShowNoConversationSelectedMessage] = useState<boolean>(false);
 	const navigate = useNavigate();
 	const [searchParams, setSearchParams] = useSearchParams();
+	const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
 	useEffect(() => {
 		const urlParamName_uuid = "uuid";
@@ -42,7 +43,7 @@ function ConversationManagementPage() {
 			setNewConversationDataSpecIri(iriFromUrl);
 			searchParams.delete(urlParamName_uuid);
 		}
-		
+
 		const dataSpecificationNameFromUrl = searchParams.get(urlParamName_packageName);
 		if (dataSpecificationNameFromUrl) {
 			setNewConversationDataSpecName(dataSpecificationNameFromUrl);
@@ -93,7 +94,7 @@ function ConversationManagementPage() {
 		setNewConversationError(null);
 		try {
 			if (!newConversationDataSpecIri || !newConversationDataSpecName || !newConversationTitle) {
-				
+
 				setNewConversationError("Failed to create a conversation. Please make sure that the conversation title is filled in.")
 				setIsCreatingConversation(false);
 				return;
@@ -111,10 +112,10 @@ function ConversationManagementPage() {
 				})
 			});
 			console.log(JSON.stringify({
-					conversationTitle: newConversationTitle,
-					dataSpecificationIri: newConversationDataSpecIri,
-					dataSpecificationName: newConversationDataSpecName
-				}));
+				conversationTitle: newConversationTitle,
+				dataSpecificationIri: newConversationDataSpecIri,
+				dataSpecificationName: newConversationDataSpecName
+			}));
 			if (!response.ok) {
 				throw new Error(`Failed to create new conversation: ${response.statusText}`);
 			}
@@ -187,8 +188,8 @@ function ConversationManagementPage() {
 							className="fill-current h-6 w-6 text-blue-500"
 							role="button" xmlns="http://www.w3.org/2000/svg"
 							viewBox="0 0 20 20">
-								<title>Close</title>
-								<path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.15a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.15 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+							<title>Close</title>
+							<path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.15a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.15 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
 						</svg>
 					</span>
 				</div>
@@ -220,7 +221,9 @@ function ConversationManagementPage() {
 								<Button variant="outline" size="sm" onClick={() => handleOpenConversation(conv.id)}>
 									<FolderOpen className="mr-2 h-4 w-4" />Open
 								</Button>
-								<Button variant="destructive" size="sm" onClick={() => handleDeleteConversation(conv.id)}>
+								<Button variant="destructive"
+												size="sm"
+												onClick={() => setDeleteTarget(conv.id)}>
 									<Trash2 className="mr-2 h-4 w-4" />Delete
 								</Button>
 							</CardContent>
@@ -294,6 +297,27 @@ function ConversationManagementPage() {
 							) : (
 								"Create conversation"
 							)}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete Conversation</DialogTitle>
+					</DialogHeader>
+					<p>Are you sure you want to delete this conversation? This action cannot be undone.</p>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+						<Button
+							variant="destructive"
+							onClick={() => {
+								if (deleteTarget) handleDeleteConversation(deleteTarget);
+								setDeleteTarget(null);
+							}}
+						>
+							Delete
 						</Button>
 					</DialogFooter>
 				</DialogContent>
