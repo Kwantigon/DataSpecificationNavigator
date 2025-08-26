@@ -29,10 +29,13 @@ public class ConversationService(
 		};
 
 		int classesCount = await _database.DataSpecificationItems
-			.Where(item => item.Type == ItemType.Class)
+			.Where(item => (item.DataSpecificationId == dataSpecification.Id) &&
+											(item.Type == ItemType.Class))
 			.CountAsync();
 		int propertiesCount = await _database.DataSpecificationItems
-			.Where(item => item.Type == ItemType.ObjectProperty || item.Type == ItemType.DatatypeProperty)
+			.Where(item => (item.DataSpecificationId == dataSpecification.Id) &&
+											(item.Type == ItemType.ObjectProperty ||
+											item.Type == ItemType.DatatypeProperty))
 			.CountAsync();
 
 		string textContent = $"Your data specification has been loaded.\nIt contains {classesCount} classes and {propertiesCount} properties.";
