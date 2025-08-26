@@ -151,7 +151,78 @@ public class LlamaResponseProcessor(
 
 	public List<DataSpecificationItemMapping>? ExtractSubstructureMapping(string llmResponse, UserMessage userMessage)
 	{
-		throw new NotImplementedException();
+		llmResponse = RemoveBackticks(llmResponse.Trim());
+		try
+		{
+			List<SubstructureItemMappingJson>? jsonData = JsonSerializer.Deserialize<List<SubstructureItemMappingJson>>(llmResponse);
+			if (jsonData is null)
+			{
+				_logger.LogError("The result of the JSON deserialization is null.");
+				return null;
+			}
+
+			List<DataSpecificationItemMapping> result = [];
+			foreach (SubstructureItemMappingJson jsonItem in jsonData)
+			{
+				DataSpecificationItem? dataSpecItem = _database.DataSpecificationItems.SingleOrDefault(
+					item => item.DataSpecificationId == userMessage.Conversation.DataSpecification.Id
+								&& item.Iri == jsonItem.Iri);
+				if (dataSpecItem is null)
+				{
+					_logger.LogError("Could not find the item for the phrase \"{MappedWords}\" in the database. Item iri: {Iri}", jsonItem.MappedWords, jsonItem.Iri);
+					continue;
+				}
+
+				DataSpecificationItemMapping mapping = new()
+				{
+					ItemIri = dataSpecItem.Iri,
+					MappedWords = jsonItem.MappedWords,
+					ItemDataSpecificationId = dataSpecItem.DataSpecificationId,
+					UserMessageId = userMessage.Id,
+					Item = dataSpecItem,
+					UserMessage = userMessage,
+				};
+				result.Add(mapping);
+			}
+			return result;
+		}
+		catch (Exception e)
+		{
+			_logger.LogError("An exception occured while deserializing the mapped items from JSON: {Exception}", e);
+			return null;
+		}
+	}
+
+	public void ExtractDataSpecificationItemSummaries(
+		string llmResponse,
+		List<ClassItem> dataSpecificationItems)
+	{
+		llmResponse = RemoveBackticks(llmResponse.Trim());
+		try
+		{
+			List<DataSpecItemSummaryJson>? jsonData = JsonSerializer.Deserialize<List<DataSpecItemSummaryJson>>(llmResponse);
+			if (jsonData is null)
+			{
+				_logger.LogError("The result of the JSON deserialization is null.");
+				return;
+			}
+
+			foreach (DataSpecItemSummaryJson jsonItem in jsonData)
+			{
+				ClassItem? item = dataSpecificationItems.Find(i => i.Iri == jsonItem.Iri);
+				if (item is null)
+				{
+					_logger.LogError("Could not find item {Iri} in the data spec items list.", jsonItem.Iri);
+					continue;
+				}
+
+				item.Summary = jsonItem.Summary;
+			}
+		}
+		catch (Exception e)
+		{
+			_logger.LogError(e, "An exception occured while deserializing the summaries from JSON.");
+		}
 	}
 
 	private string RemoveBackticks(string llmResponse)

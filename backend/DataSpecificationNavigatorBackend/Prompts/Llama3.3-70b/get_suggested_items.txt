@@ -14,7 +14,7 @@ These items are already mentioned or used in the current question:
 {2}
 
 ### Task
-Suggest 8 additional properties from the specification that could expand my question.
+Suggest 5 additional properties from the specification that could expand my question.
 
 IMPORTANT:
 - Only suggest ObjectProperty or DatatypeProperty present in the provided data specification subset.

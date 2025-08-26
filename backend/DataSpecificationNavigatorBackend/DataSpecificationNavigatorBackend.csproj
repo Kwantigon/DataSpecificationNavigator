@@ -22,19 +22,40 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Prompts\generate_suggested_message.txt">
+    <None Update="Prompts\Gemini\generate_suggested_message.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Prompts\get_suggested_items.txt">
+    <None Update="Prompts\Gemini\get_suggested_items.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Prompts\map_to_data_specification.txt">
+    <None Update="Prompts\Gemini\summarize_data_specification_classes.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Prompts\map_to_substructure.txt">
+    <None Update="Prompts\Llama3.3-70b\generate_suggested_message.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Prompts\welcome_message_data_specification_summary.txt">
+    <None Update="Prompts\Llama3.3-70b\get_suggested_items.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Llama3.3-70b\map_to_data_specification.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Llama3.3-70b\map_to_substructure.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Llama3.3-70b\summarize_data_specification_classes.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Llama3.3-70b\welcome_message_data_specification_summary.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Gemini\map_to_data_specification.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Gemini\map_to_substructure.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\Gemini\welcome_message_data_specification_summary.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

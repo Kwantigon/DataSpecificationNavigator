@@ -1,0 +1,23 @@
+You are assisting a user in refining their data query.
+
+### User question
+The user originally asked:
+"{0}"
+
+### Current context
+The following items are already part of the question:
+{1}
+
+### Newly added items
+The user has now added these items:
+{2}
+
+### Task
+Rewrite the user’s question so that:
+- All newly added items are integrated smoothly and naturally.  
+- The question remains faithful to the user’s original intent.  
+- The result is a clear, natural-sounding question in plain English.  
+
+### Output
+Return only the new natural language question as plain text.  
+Do not include explanations, apologies, or any extra formatting.

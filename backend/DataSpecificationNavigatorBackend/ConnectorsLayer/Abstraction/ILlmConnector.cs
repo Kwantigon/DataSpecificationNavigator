@@ -18,8 +18,6 @@ public interface ILlmConnector
 		DataSpecificationSubstructure dataSpecificationSubstructure,
 		UserMessage userMessage);
 
-	Task<string> GenerateItemSummaryAsync(DataSpecificationItem dataSpecificationItem);
-
 	Task<string> GenerateSuggestedMessageAsync(
 		DataSpecification dataSpecification,
 		UserMessage userMessage,
@@ -28,4 +26,8 @@ public interface ILlmConnector
 
 	Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
 		DataSpecification dataSpecification);
+
+	Task GenerateItemSummaries(
+		DataSpecification dataSpecification,
+		List<ClassItem> dataSpecificationItems);
 }

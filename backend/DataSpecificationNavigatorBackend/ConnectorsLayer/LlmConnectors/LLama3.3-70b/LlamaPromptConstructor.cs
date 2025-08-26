@@ -7,172 +7,138 @@ using System.Text.Unicode;
 
 namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.LLama3._3_70b;
 
-public class LlamaPromptConstructor(
-	ILogger<LlamaPromptConstructor> logger,
-	AppDbContext appDbContext) : ILlmPromptConstructor
+public class LlamaPromptConstructor : ILlmPromptConstructor
 {
-	private readonly ILogger<LlamaPromptConstructor> _logger = logger;
-	private readonly AppDbContext _database = appDbContext;
-	private readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
+	private readonly ILogger<LlamaPromptConstructor> _logger;
+	private readonly AppDbContext _database;
+	private readonly JsonSerializerOptions _jsonSerializerOptions;
+
+	private readonly string _dataSpecificationSummaryTemplate;
+
+	private readonly string _mapToDataSpecificationTemplate;
+
+	private readonly string _getSuggestedPropertiesTemplate;
+
+	private readonly string _generateSuggestedMessageTemplate;
+
+	private readonly string _mapToSubstructureTemplate;
+
+	private readonly string _summarizeItemsTemplate;
+
+	public LlamaPromptConstructor(
+		ILogger<LlamaPromptConstructor> logger,
+		IConfiguration config,
+		AppDbContext appDbContext)
 	{
-		Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
-		WriteIndented = true,
-		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-	};
+		_logger = logger;
+		_database = appDbContext;
+		_jsonSerializerOptions = new JsonSerializerOptions
+		{
+			Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
+			WriteIndented = true,
+			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+		};
 
-	private readonly string _dataSpecificationSummaryTemplate = """
-		You are a system that summarizes data specifications.
+		#region Load templates from files
+		string? baseDirectory = config["Llm:Ollama:Prompts:BaseDirectory"];
+		if (baseDirectory is null)
+		{
+			throw new Exception("The key Llm:Ollama:Prompts:BaseDirectory is missing in the config file.");
+		}
 
-		### Data specification
-		Here is the data specification as structured items extracted from an OWL file:
+		string? itemsMapping = config["Llm:Ollama:Prompts:ItemsMapping"];
+		if (itemsMapping is null)
+		{
+			throw new Exception("The key Llm:Ollama::ItemsMapping is missing in the config file.");
+		}
+		string templateFile = Path.Combine(baseDirectory, itemsMapping);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
+		}
+		else
+		{
+			_mapToDataSpecificationTemplate = File.ReadAllText(templateFile);
+		}
 
-		{0}
+		string? getRelatedItems = config["Llm:Ollama:Prompts:GetRelatedItems"];
+		if (getRelatedItems is null)
+		{
+			throw new Exception("The key Llm:Ollama:Prompts:GetRelatedItems is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, getRelatedItems);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
+		}
+		else
+		{
+			_getSuggestedPropertiesTemplate = File.ReadAllText(templateFile);
+		}
 
-		Each item may include:
-		- `Iri`: identifier from OWL
-		- `Label`: the class or property name
-		- `Type`: Class, ObjectProperty, or DatatypeProperty
-		- `OwlAnnotation`: annotation extracted from the OWL file
-		- `RdfsComment`: comment extracted from the OWL file
+		string? generateSuggestedMessage = config["Llm:Ollama:Prompts:GenerateSuggestedMessage"];
+		if (generateSuggestedMessage is null)
+		{
+			throw new Exception("The key Llm:Ollama:Prompts:GenerateSuggestedMessage is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, generateSuggestedMessage);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
+		}
+		else
+		{
+			_generateSuggestedMessageTemplate = File.ReadAllText(templateFile);
+		}
 
-		### Task
-		1. Provide a **concise, user-friendly summary** (3–5 sentences) describing the main domain of this specification in plain English.
-		   - Focus on what real-world entities it models (e.g., people, organizations, events, products) and how they relate.
-		   - Avoid technical jargon such as "ontology", "object property", "domain", or "range".
-		   - Write the summary so that a non-technical user can understand what kinds of questions the specification helps answer.
+		string? substructureItemMapping = config["Llm:Ollama:Prompts:DataSpecSubstructureItemsMapping"];
+		if (substructureItemMapping is null)
+		{
+			throw new Exception("The key Llm:Ollama::DataSpecSubstructureItemsMapping is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, substructureItemMapping);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
+		}
+		else
+		{
+			_mapToSubstructureTemplate = File.ReadAllText(templateFile);
+		}
 
-		2. Suggest **3–5 key classes** that would make good starting points for user queries.
-		   - Select the most central or frequently connected classes based on the provided items.
-		   - For each suggested class, provide its `Label` and a short `Reason` why it is important.
+		string? welcomeMessageDataSpecificationSummary = config["Llm:Ollama:Prompts:WelcomeMessageDataSpecificationSummary"];
+		if (welcomeMessageDataSpecificationSummary is null)
+		{
+			throw new Exception("The key Llm:Ollama:Prompts:WelcomeMessageDataSpecificationSummary is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, welcomeMessageDataSpecificationSummary);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist");
+		}
+		else
+		{
+			_dataSpecificationSummaryTemplate = File.ReadAllText(templateFile);
+		}
 
-		IMPORTANT:
-		- Only suggest classes present in the provided data specification.
-		- Do NOT invent any classes.
-		- Only use classes present in the specification.
-		- If a suggested class is not present in the provided data, do not include it in the output at all.
-		- Do NOT provide any explanations, commentary, reasoning, or apologies.
-		- Return ONLY a raw JSON.
-		- Avoid technical jargon such as "ontology", "object property", "domain", or "range".
+		string? summarizeItems = config["Llm:Ollama:Prompts:SummarizeDataSpecItems"];
+		if (summarizeItems is null)
+		{
+			throw new Exception("The key Llm:Ollama:Prompts:SummarizeDataSpecItems is missing in the config file.");
+		}
+		templateFile = Path.Combine(baseDirectory, summarizeItems);
+		if (!File.Exists(templateFile))
+		{
+			throw new Exception($"The template file \"{templateFile}\" does not exist.");
+		}
+		else
+		{
+			_summarizeItemsTemplate = File.ReadAllText(templateFile);
+		}
+		#endregion Load templates from files
 
-		## Output format
-		Return a **raw JSON object** with the following fields:
-		{{
-			"Summary": "A user-friendly summary (3–5 sentences) describing the domain of the specification",
-			"SuggestedClasses": [
-				{{
-					"Label": "The class label",
-					"Reason": "A brief explanation of why this class is important"
-				}}
-			]
-		}}
-
-		IMPORTANT:
-		- Return ONLY a raw JSON.
-		- Do NOT provide explanations, commentary, or apologies.
-		
-		""";
-
-	private readonly string _mapToDataSpecificationTemplate = """
-		You are an expert system designed to extract structured item mappings from user questions based on OWL data specifications.
-
-		### Data specification
-		The following is a flattened list of data specification items in JSON format, extracted from the OWL file.
-
-		{0}
-
-		### User question
-		The question that user asked is:
-		"{1}"
-
-		### Task
-		1. Identify which items from the data specification are explicitly mentioned in the user's question.
-		   - Only include items that can be directly mapped to words or phrases in the question.
-		   - Each word or phrase may only map to one item.
-		   - If an item cannot be mapped to any phrase, do not include it in the output.
-
-		2. For each identified item, provide:
-		   - The item's IRI.
-		   - A brief, user-friendly summary (3–4 sentences) describing the item in the context of the data specification.
-		   - The exact words or phrase from the question (`MappedWords`).
-
-		IMPORTANT:
-		- The output must contain only classes or properties from the provided data specification.
-		- Do NOT invent any classes or properties.
-		- If a suggested property is not present in the provided data specification, do not include it in the output at all.
-		- Do NOT provide any explanations, commentary, reasoning, or apologies.
-		- Return ONLY a raw JSON array.
-		- If the user's question is incoherent or unrelated to the specification, return an empty array.
-
-		### Output format
-		Return only a raw JSON array. Each element must follow this structure exactly:
-
-		[
-		  {{
-		    "Iri": "string",
-		    "Summary": "string",
-		    "MappedWords": "string"
-		  }}
-		]
-
-		Do not include markdown, commentary, or explanations.
-		Return **only the JSON array**.
-		
-		""";
-
-	private readonly string _getSuggestedItemsTemplate = """
-		You are assisting me in exploring a data specification.
-
-		### Specification subset
-		Here is the relevant part of the specification, grouped by class:
-
-		{0}
-
-		### Current question
-		"{1}"
-
-		### Current context
-		These items are already mentioned or used in the current question:
-
-		{2}
-
-		### Task
-		Suggest 8 additional properties from the specification that could expand my question.
-
-		IMPORTANT:
-		- Only suggest ObjectProperty or DatatypeProperty present in the provided data specification subset.
-		- Do not suggest any items listed in the current context.
-		- Do NOT invent any properties.
-		- Only use properties present in the specification subset.
-		- If a suggested property is not present in the provided data, do not include it in the output at all.
-		- Suggestions must have either their domain or range class in the current context list above.
-		- Do NOT provide any explanations, commentary, reasoning, or apologies.
-		- Exclude unrelated items. If nothing fits, return an empty array.
-		- Return ONLY a raw JSON array.
-
-		### Output format
-		Return a **raw JSON array**. Each element must be an object with these fields:
-
-		[
-		  {{
-		    "Iri": "string",
-		    "Summary": "User-friendly summary in 2-3 sentences describing the property",
-		    "Reason": "Why this property is relevant to the current question",
-		    "DomainClass": {{
-		      "Iri": "string",
-		      "Summary": "User-friendly summary in 2-3 sentences describing the domain class in the context of the data specification"
-		    }},
-		    "RangeClass": {{
-		      "Iri": "string",
-		      "Summary": "User-friendly summary in 2-3 sentences describing the range class in the context of the data specification (empty for datatypes)"
-		    }}
-		  }}
-		]
-
-		IMPORTANT:
-		- Return ONLY a raw JSON array.
-		- Do NOT provide explanations, commentary, or apologies.
-		
-		""";
+		_logger.LogInformation("Prompt templates loaded sucessfully.");
+	}
 
 	public string BuildDataSpecificationSummaryPrompt(DataSpecification dataSpecification)
 	{
@@ -203,17 +169,41 @@ public class LlamaPromptConstructor(
 		string substructureString = SerializeSubstructureFlattened(substructure);
 		string substructureProximity = SerializeSubstructureProximity(dataSpecification, classesInSubstructure);
 
-		return string.Format(_getSuggestedItemsTemplate, substructureProximity, userQuestion, substructureString);
+		return string.Format(_getSuggestedPropertiesTemplate, substructureProximity, userQuestion, substructureString);
 	}
 
-	public string BuildGenerateSuggestedMessagePrompt(DataSpecification dataSpecification, string userQuestion, DataSpecificationSubstructure substructure, List<DataSpecificationItem> selectedItems)
+	public string BuildGenerateSuggestedMessagePrompt(
+		DataSpecification dataSpecification, string userQuestion,
+		DataSpecificationSubstructure substructure, List<DataSpecificationItem> selectedItems)
 	{
-		throw new NotImplementedException();
+		// Not using 'dataSpecification' in this prompt to reduce token size.
+
+		string substructureFlattenedJson = SerializeSubstructureFlattened(substructure);
+		var selectedItemsInfo = selectedItems.Select(i => new { i.Iri, i.Label }).ToList();
+		string selectedItemsFlattenedJson = JsonSerializer.Serialize(selectedItemsInfo, _jsonSerializerOptions);
+
+		return string.Format(_generateSuggestedMessageTemplate, userQuestion, substructureFlattenedJson, selectedItemsFlattenedJson);
 	}
 
-	public string BuildMapToSubstructurePrompt(DataSpecification dataSpecification, string userQuestion, DataSpecificationSubstructure substructure)
+	public string BuildMapToSubstructurePrompt(
+		DataSpecification dataSpecification, string userQuestion, DataSpecificationSubstructure substructure)
 	{
-		throw new NotImplementedException();
+		// Not using 'dataSpecification' in this prompt to reduce token size.
+
+		// For mapping prompt, give the full nested structure so that the LLM sees exactly what each class owns.
+		string substructureString = JsonSerializer.Serialize(substructure, _jsonSerializerOptions);
+		return string.Format(_mapToSubstructureTemplate, userQuestion, substructureString);
+	}
+
+	public string BuildItemsSummaryPrompt(
+		DataSpecification dataSpecification,
+		List<ClassItem> dataSpecificationItems)
+	{
+		string dataSpecificationString = SerializeAllDataSpecItemsFlattened(dataSpecification);
+		var items = dataSpecificationItems.Select(i => new { i.Iri, i.Label, i.Type, i.OwlAnnotation, i.RdfsComment });
+		string itemsListJson = JsonSerializer.Serialize(items, _jsonSerializerOptions);
+
+		return string.Format(_summarizeItemsTemplate, dataSpecificationString, itemsListJson);
 	}
 
 	private string SerializeAllDataSpecItemsFlattened(DataSpecification dataSpecification)

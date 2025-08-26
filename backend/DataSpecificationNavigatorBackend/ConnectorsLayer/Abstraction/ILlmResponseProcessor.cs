@@ -22,4 +22,8 @@ public interface ILlmResponseProcessor
 
 	WelcomeMessageDataSpecificationSummaryJson? ExtractWelcomeMessageSummaryAndSuggestions(
 		string llmResponse);
+
+	void ExtractDataSpecificationItemSummaries(
+		string llmResponse,
+		List<ClassItem> dataSpecificationItems);
 }
