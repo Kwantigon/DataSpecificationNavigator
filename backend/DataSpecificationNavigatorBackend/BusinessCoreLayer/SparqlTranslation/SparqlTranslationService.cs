@@ -123,64 +123,68 @@ public class SparqlTranslationService(
 		var visited = new HashSet<QueryNode>();
 		foreach (var root in graph.Roots)
 		{
-			GenerateTriplesForNode(root, sparql, visited, root.VariableName!, inOptionalContext: false);
+			GenerateTriplesForNode(root, sparql, visited, root.VariableName!, 1);
 		}
 		sparql.AppendLine("}");
 
 		return sparql.ToString();
 	}
 
-
 	private void GenerateTriplesForNode(
 		QueryNode node, StringBuilder sparql,
 		HashSet<QueryNode> visited, string currentVar,
-		bool inOptionalContext = false)
+		int indentLevel)
 	{
 		if (visited.Contains(node))
 			return;
+
 		visited.Add(node);
 
-		const string indent = "  ";
+		string indent = new string(' ', indentLevel * 2);
 
+		// Triple for the type of the variable.
 		sparql.AppendLine($"{indent}# {node.Label}");
-		if (inOptionalContext)
-		{
-			sparql.AppendLine($"{indent}OPTIONAL {{ {currentVar} a <{node.Iri}> . }}");
-		}
-		else
-		{
-			sparql.AppendLine($"{indent}{currentVar} a <{node.Iri}> .");
-		}
+		sparql.AppendLine($"{indent}{currentVar} a <{node.Iri}> .");
 
-		foreach (DatatypeNode datatypeNode in node.DatatypeProperties)
+		// Datatype properties
+		foreach (DatatypeNode dtProp in node.DatatypeProperties)
 		{
-			if (datatypeNode.IsOptional || inOptionalContext)
+			if (dtProp.IsOptional)
 			{
-				sparql.AppendLine($"{indent}OPTIONAL {{ {currentVar} <{datatypeNode.PropertyIri}> {datatypeNode.VariableName} . }}");
+				if (!string.IsNullOrWhiteSpace(dtProp.FilterExpression))
+				{
+					sparql.AppendLine($"{indent}OPTIONAL {{");
+					sparql.AppendLine($"{indent}  {currentVar} <{dtProp.PropertyIri}> {dtProp.VariableName} .");
+					sparql.AppendLine($"{indent}  FILTER({dtProp.FilterExpression.Replace("{?var}", dtProp.VariableName)})");
+					sparql.AppendLine($"{indent}}}");
+				}
+				else
+				{
+					sparql.AppendLine($"{indent}OPTIONAL {{ {currentVar} <{dtProp.PropertyIri}> {dtProp.VariableName} . }}");
+				}
 			}
 			else
 			{
-				sparql.AppendLine($"{indent}{currentVar} <{datatypeNode.PropertyIri}> {datatypeNode.VariableName} .");
-			}
-			if (!string.IsNullOrWhiteSpace(datatypeNode.FilterExpression))
-			{
-				sparql.AppendLine($"{indent}  FILTER({datatypeNode.FilterExpression.Replace("{?var}", datatypeNode.VariableName)})");
+				sparql.AppendLine($"{indent}{currentVar} <{dtProp.PropertyIri}> {dtProp.VariableName} .");
+				if (!string.IsNullOrWhiteSpace(dtProp.FilterExpression))
+					sparql.AppendLine($"{indent}FILTER({dtProp.FilterExpression.Replace("{?var}", dtProp.VariableName)})");
 			}
 		}
 
+		// Object properties
 		foreach (QueryEdge edge in node.OutgoingEdges)
 		{
-			if (edge.IsOptional || inOptionalContext)
+			if (edge.IsOptional)
 			{
-				sparql.AppendLine($"{indent}OPTIONAL {{  {currentVar} <{edge.PropertyIri}> {edge.Target.VariableName} . }}");
-				sparql.AppendLine();
-				GenerateTriplesForNode(edge.Target, sparql, visited, edge.Target.VariableName!, inOptionalContext: true);
+				sparql.AppendLine($"{indent}OPTIONAL {{");
+				sparql.AppendLine($"{indent}  {currentVar} <{edge.PropertyIri}> {edge.Target.VariableName} .");
+				GenerateTriplesForNode(edge.Target, sparql, visited, edge.Target.VariableName!, indentLevel + 1);
+				sparql.AppendLine($"{indent}}}");
 			}
 			else
 			{
 				sparql.AppendLine($"{indent}{currentVar} <{edge.PropertyIri}> {edge.Target.VariableName} .");
-				sparql.AppendLine();
-				GenerateTriplesForNode(edge.Target, sparql, visited, edge.Target.VariableName!);
+				GenerateTriplesForNode(edge.Target, sparql, visited, edge.Target.VariableName!, indentLevel);
 			}
 		}
 
