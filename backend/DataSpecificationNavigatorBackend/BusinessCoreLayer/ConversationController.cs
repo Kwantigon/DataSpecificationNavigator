@@ -271,7 +271,9 @@ public class ConversationController(
 				{
 					Iri = m.ItemIri,
 					Label = m.Item.Label,
-					Summary = m.Item.Summary ?? "Sorry, I was not able to make a summary for this item.",
+					Summary = (string.IsNullOrWhiteSpace(m.Item.Summary)
+											? "Sorry, I was not able to make a summary for this item."
+											: m.Item.Summary),
 					MappedPhrase = m.MappedWords,
 					StartIndex = string.IsNullOrWhiteSpace(m.MappedWords) ? -1 : indices[m.MappedWords].StartIndex,
 					EndIndex = string.IsNullOrWhiteSpace(m.MappedWords) ? -1 : indices[m.MappedWords].EndIndex

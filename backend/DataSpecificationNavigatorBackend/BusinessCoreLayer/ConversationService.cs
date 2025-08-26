@@ -659,7 +659,7 @@ public class ConversationService(
 
 		foreach (var classItem in substructure.ClassItems)
 		{
-			if (manualSuggestions.Count > 6)
+			if (manualSuggestions.Count > 5)
 			{
 				break;
 			}
@@ -703,7 +703,9 @@ public class ConversationService(
 																	((ObjectPropertyItem)s.SuggestedProperty).DomainIri == property.DomainIri))
 				.ToList();
 
-			// Pick 2 random property from each list, if possible.
+			// Pick some randome properties.
+			// Should pick at least 1 from each list.
+			// It's not guaranteed that each list will contain some items.
 			const string reason = "This property was not suggested by the LLM. It was picked randomly.";
 			Random rng = new();
 			if (classItemIsDomain.Count > 0)
@@ -720,7 +722,7 @@ public class ConversationService(
 					ReasonForSuggestion = reason
 				});
 
-				if (classItemIsDomain.Count > 1)
+				if (classItemIsDomain.Count > 1 && manualSuggestions.Count < 5)
 				{
 					// Pick the second suggestion.
 					// The property next to the previously suggested.
@@ -759,7 +761,7 @@ public class ConversationService(
 					ReasonForSuggestion = reason
 				});
 
-				if (classItemIsRange.Count > 1)
+				if (classItemIsRange.Count > 1 && manualSuggestions.Count < 5)
 				{
 					// Pick the second suggestion.
 					// The property next to the previously suggested.
@@ -797,30 +799,6 @@ public class ConversationService(
 					UserMessage = userMessage,
 					ReasonForSuggestion = reason
 				});
-
-				if (datatypeProperties.Count > 1)
-				{
-					// Pick the second suggestion.
-					// The property next to the previously suggested.
-					if (index == 0)
-					{
-						index = 1;
-					}
-					else
-					{
-						index--;
-					}
-					suggested = datatypeProperties[index];
-					manualSuggestions.Add(new DataSpecificationPropertySuggestion()
-					{
-						PropertyDataSpecificationId = dataSpecificationId,
-						SuggestedPropertyIri = suggested.Iri,
-						UserMessageId = userMessage.Id,
-						SuggestedProperty = suggested,
-						UserMessage = userMessage,
-						ReasonForSuggestion = reason
-					});
-				}
 			}
 		}
 
