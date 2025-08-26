@@ -26,5 +26,5 @@ public interface ILlmPromptConstructor
 
 	string BuildItemsSummaryPrompt(
 		DataSpecification dataSpecification,
-		List<ClassItem> dataSpecificationItems);
+		List<DataSpecificationItem> dataSpecificationItems);
 }

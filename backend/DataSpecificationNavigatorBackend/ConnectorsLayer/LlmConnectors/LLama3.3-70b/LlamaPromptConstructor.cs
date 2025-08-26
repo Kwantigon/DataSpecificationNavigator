@@ -197,7 +197,7 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 
 	public string BuildItemsSummaryPrompt(
 		DataSpecification dataSpecification,
-		List<ClassItem> dataSpecificationItems)
+		List<DataSpecificationItem> dataSpecificationItems)
 	{
 		string dataSpecificationString = SerializeAllDataSpecItemsFlattened(dataSpecification);
 		var items = dataSpecificationItems.Select(i => new { i.Iri, i.Label, i.Type, i.OwlAnnotation, i.RdfsComment });

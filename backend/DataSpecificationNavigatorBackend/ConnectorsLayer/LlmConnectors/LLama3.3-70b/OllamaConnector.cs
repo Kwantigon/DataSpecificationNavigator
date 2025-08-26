@@ -235,7 +235,7 @@ public class OllamaConnector : ILlmConnector
 
 	public async Task GenerateItemSummaries(
 		DataSpecification dataSpecification,
-		List<ClassItem> dataSpecificationItems)
+		List<DataSpecificationItem> dataSpecificationItems)
 	{
 		string prompt = _promptConstructor.BuildItemsSummaryPrompt(dataSpecification, dataSpecificationItems);
 		int attempts = 0;

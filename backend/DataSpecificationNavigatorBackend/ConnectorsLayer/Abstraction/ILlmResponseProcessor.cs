@@ -25,5 +25,5 @@ public interface ILlmResponseProcessor
 
 	void ExtractDataSpecificationItemSummaries(
 		string llmResponse,
-		List<ClassItem> dataSpecificationItems);
+		List<DataSpecificationItem> dataSpecificationItems);
 }

@@ -1,4 +1,4 @@
-﻿You are a system that generates short, user-friendly summaries of OWL classes.
+﻿You are a system that generates short, user-friendly summaries of OWL items.
 
 ### Data specification
 Here is the data specification as structured items extracted from an OWL file:
@@ -7,20 +7,20 @@ Here is the data specification as structured items extracted from an OWL file:
 
 Each item may include:
 - `Iri`: identifier from OWL
-- `Label`: the class or property name
-- `Type`: Class, ObjectProperty, or DatatypeProperty
+- `Label`: the item or property name
+- `Type`: Item, ObjectProperty, or DatatypeProperty
 - `OwlAnnotation`: annotation extracted from the OWL file
 - `RdfsComment`: comment extracted from the OWL file
 
-### Target classes
-Here is the list of classes that need to be summarized:
+### Target items
+Here is the list of items that need to be summarized:
 {1}
 
 ### Task
-For each class in the list:
+For each item in the list:
 - Write a short summary (3–4 sentences).
-- The summary must describe the real-world meaning of the class in the context of the data specification.
-- Mention how it relates to other important classes or properties if relevant.
+- The summary must describe the real-world meaning of the item in the context of the data specification.
+- Mention how it relates to other important items, if relevant.
 - Do not use technical words like "ontology", "domain", "range", "object property".
 - The summary must be understandable to a non-technical user.
 
@@ -30,6 +30,6 @@ Do not include markdown, explanations, or text outside the JSON.
 
 Each element of the JSON array must follow this exact shape:
 {{
-  "Iri": "the IRI of the class exactly as given in the data specification",
+  "Iri": "the IRI of the item exactly as given in the data specification",
   "Summary": "3–4 sentences, user-friendly description"
 }}

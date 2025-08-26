@@ -200,7 +200,7 @@ public class GeminiResponseProcessor(
 
 	public void ExtractDataSpecificationItemSummaries(
 		string llmResponse,
-		List<ClassItem> dataSpecificationItems)
+		List<DataSpecificationItem> dataSpecificationItems)
 	{
 		llmResponse = RemoveBackticks(llmResponse.Trim());
 		try
@@ -214,7 +214,7 @@ public class GeminiResponseProcessor(
 
 			foreach (DataSpecItemSummaryJson jsonItem in jsonData)
 			{
-				ClassItem? item = dataSpecificationItems.Find(i => i.Iri == jsonItem.Iri);
+				DataSpecificationItem? item = dataSpecificationItems.Find(i => i.Iri == jsonItem.Iri);
 				if (item is null)
 				{
 					_logger.LogError("Could not find item {Iri} in the data spec items list.", jsonItem.Iri);

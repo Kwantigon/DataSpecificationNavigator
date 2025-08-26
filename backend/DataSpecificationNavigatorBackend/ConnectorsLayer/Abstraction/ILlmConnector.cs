@@ -29,5 +29,5 @@ public interface ILlmConnector
 
 	Task GenerateItemSummaries(
 		DataSpecification dataSpecification,
-		List<ClassItem> dataSpecificationItems);
+		List<DataSpecificationItem> dataSpecificationItems);
 }

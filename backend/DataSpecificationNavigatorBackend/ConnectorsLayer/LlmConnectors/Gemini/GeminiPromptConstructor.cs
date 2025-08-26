@@ -251,7 +251,7 @@ public class GeminiPromptConstructor : ILlmPromptConstructor
 		return JsonSerializer.Serialize(flattenedSubstructure, _jsonSerializerOptions);
 	}
 
-	public string BuildItemsSummaryPrompt(DataSpecification dataSpecification, List<ClassItem> dataSpecificationItems)
+	public string BuildItemsSummaryPrompt(DataSpecification dataSpecification, List<DataSpecificationItem> dataSpecificationItems)
 	{
 		var items = dataSpecificationItems.Select(i => new { i.Iri, i.Label, i.Type, i.OwlAnnotation, i.RdfsComment });
 		string itemsListJson = JsonSerializer.Serialize(items, _jsonSerializerOptions);
