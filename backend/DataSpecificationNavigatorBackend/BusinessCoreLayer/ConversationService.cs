@@ -138,11 +138,12 @@ public class ConversationService(
 				// In the ideal case, 'itemsToAdd' contains mapped classes, properties, and all their domains and ranges.
 				// But since it is an output from the LLM, it might not be complete.
 				// Add missing domains and ranges.
-				List<ClassItem> missingClasses = [];
+				List<DataSpecificationItemMapping> manuallyMapped = [];
 				foreach (PropertyItem property in itemsToAdd.OfType<PropertyItem>())
 				{
 					// Check for missing domain.
-					if (!itemsToAdd.Any(item => item.Iri == property.DomainIri))
+					if (!itemsToAdd.Any(item => item.Iri == property.DomainIri) &&
+							!manuallyMapped.Any(c => c.ItemIri == property.DomainIri))
 					{
 						DataSpecificationItemMapping mapping = new()
 						{
@@ -153,13 +154,13 @@ public class ConversationService(
 							UserMessage = userMessage,
 							MappedWords = string.Empty, // Was not mapped directly from the user message.
 						};
-						await _database.ItemMappings.AddAsync(mapping);
-						missingClasses.Add(property.Domain);
+						manuallyMapped.Add(mapping);
 					}
 
 					// Check for missing range.
 					if (property is ObjectPropertyItem objectProperty &&
-							!itemsToAdd.Any(item => item.Iri == objectProperty.RangeIri))
+							!itemsToAdd.Any(item => item.Iri == objectProperty.RangeIri) &&
+							!manuallyMapped.Any(c => c.ItemIri == objectProperty.RangeIri))
 					{
 						DataSpecificationItemMapping mapping = new()
 						{
@@ -170,14 +171,21 @@ public class ConversationService(
 							UserMessage = userMessage,
 							MappedWords = string.Empty, // Was not mapped directly from the user message.
 						};
-						await _database.ItemMappings.AddAsync(mapping);
-						missingClasses.Add(objectProperty.Range);
+						manuallyMapped.Add(mapping);
 					}
 				}
-				
-				await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, missingClasses);
-				itemsToAdd.AddRange(missingClasses);
 
+				if (manuallyMapped.Count > 0)
+				{
+					await _database.ItemMappings.AddRangeAsync(manuallyMapped);
+
+					List<ClassItem> missingClasses = manuallyMapped
+						.Select(m => (ClassItem)m.Item)
+						.ToList();
+					await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, missingClasses);
+					itemsToAdd.AddRange(missingClasses);
+				}
+				
 				AddDataSpecItemsToConversationSubstructure(conversation, itemsToAdd, []); // No user selections at this point, so passing an empty list.
 			}
 		}
