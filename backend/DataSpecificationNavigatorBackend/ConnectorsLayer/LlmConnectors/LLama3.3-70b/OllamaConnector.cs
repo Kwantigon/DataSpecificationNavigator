@@ -9,7 +9,7 @@ namespace DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors;
 public class OllamaConnector : ILlmConnector
 {
 	private readonly ILogger<OllamaConnector> _logger;
-	private readonly IPromptConstructor _promptConstructor;
+	private readonly ILlmPromptConstructor _promptConstructor;
 	private readonly ILlmResponseProcessor _responseProcessor;
 	private readonly int _retryAttempts;
 	private readonly Chat _chat;
@@ -17,7 +17,7 @@ public class OllamaConnector : ILlmConnector
 	public OllamaConnector(
 		ILogger<OllamaConnector> logger,
 		IConfiguration config,
-		IPromptConstructor promptConstructor,
+		ILlmPromptConstructor promptConstructor,
 		ILlmResponseProcessor responseProcessor)
 	{
 		_logger = logger;
@@ -61,12 +61,49 @@ public class OllamaConnector : ILlmConnector
 		_chat = new(ollamaApiClient);
 	}
 
+	public async Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
+		DataSpecification dataSpecification)
+	{
+		_logger.LogDebug("Generating a summary and class suggestions for the first message.");
+		string prompt = _promptConstructor.BuildDataSpecificationSummaryPrompt(dataSpecification);
+		_logger.LogDebug("Prompting the LLM.");
+
+		int attempts = 0;
+		WelcomeMessageDataSpecificationSummaryJson? result = null;
+		while (attempts < _retryAttempts && result is null)
+		{
+			try
+			{
+				_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
+				string response = await SendPromptAsync(prompt);
+				_logger.LogDebug("LLM response: {Response}", response);
+
+				result = _responseProcessor.ExtractWelcomeMessageSummaryAndSuggestions(response);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Failed to retrieve a summary and initial suggestions from the LLM.");
+				result = null; // Set result to null to attempt the prompt again.
+			}
+			attempts++;
+		}
+
+		if (result is null)
+		{
+			_logger.LogError("Data specification summary and suggestions are still null after " + attempts + " attempts.");
+		}
+
+		return result;
+	}
+
 	public async Task<List<DataSpecificationItemMapping>> MapUserMessageToDataSpecificationAsync(
 		DataSpecification dataSpecification, UserMessage userMessage)
 	{
-		string prompt = _promptConstructor.BuildMapToDataSpecificationPrompt(dataSpecification, userMessage.TextContent);
+		_logger.LogDebug("Mapping message \"{UserMessageText}\" to data specification items.", userMessage.TextContent);
+
 		int attempts = 0;
 		List<DataSpecificationItemMapping>? mapped = null;
+		string prompt = _promptConstructor.BuildMapToDataSpecificationPrompt(dataSpecification, userMessage.TextContent);
 		while (attempts < _retryAttempts && mapped is null)
 		{
 			try
@@ -74,24 +111,61 @@ public class OllamaConnector : ILlmConnector
 				_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
 				string response = await SendPromptAsync(prompt);
 				_logger.LogDebug("LLM response: {Response}", response);
+
 				mapped = _responseProcessor.ExtractMappedItems(response, userMessage);
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "An error occured while prompting the LLM.");
-				mapped = null; // Reset mapped to null to retry
+				_logger.LogError(ex, "Failed to retrieve the items mapping from LLM.");
+				mapped = null; // Reset mapped to null to trigger another attempt.
 			}
-
+			
 			attempts++;
 		}
 
 		if (mapped is null)
 		{
-			_logger.LogError("The data specification items list is still null after " + _retryAttempts + " attempts.");
+			_logger.LogError("The data specification items list is still null after " + attempts + " attempts.");
 			return [];
 		}
 
 		return mapped;
+	}
+
+	public async Task<List<DataSpecificationPropertySuggestion>> GetSuggestedPropertiesAsync(
+		DataSpecification dataSpecification, DataSpecificationSubstructure dataSpecificationSubstructure, UserMessage userMessage)
+	{
+		string prompt = _promptConstructor.BuildGetSuggestedPropertiesPrompt(
+			dataSpecification, userMessage.TextContent, dataSpecificationSubstructure);
+		_logger.LogDebug(prompt);
+
+		int attempts = 0;
+		List<DataSpecificationPropertySuggestion>? suggestedItems = null;
+		while (attempts < _retryAttempts && suggestedItems is null)
+		{
+			try
+			{
+				_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
+				string response = await SendPromptAsync(prompt);
+				_logger.LogDebug("LLM response: {Response}", response);
+				suggestedItems = _responseProcessor.ExtractSuggestedItems(response, userMessage);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "An error occured while prompting the LLM.");
+				suggestedItems = null; // Reset suggestedItems to null to retry.
+			}
+
+			attempts++;
+		}
+
+		if (suggestedItems is null)
+		{
+			_logger.LogError("The relatedItems list is still null after " + attempts + " attempts.");
+			return [];
+		}
+
+		return suggestedItems;
 	}
 
 	public async Task<List<DataSpecificationItemMapping>> MapUserMessageToSubstructureAsync(
@@ -125,39 +199,6 @@ public class OllamaConnector : ILlmConnector
 		}
 
 		return mapped;
-	}
-
-	public async Task<List<DataSpecificationPropertySuggestion>> GetSuggestedPropertiesAsync(
-		DataSpecification dataSpecification, DataSpecificationSubstructure dataSpecificationSubstructure, UserMessage userMessage)
-	{
-		string prompt = _promptConstructor.BuildGetSuggestedItemsPrompt(dataSpecification, userMessage.TextContent, dataSpecificationSubstructure);
-		int attempts = 0;
-		List<DataSpecificationPropertySuggestion>? suggestedItems = null;
-		while (attempts < _retryAttempts && suggestedItems is null)
-		{
-			try
-			{
-				_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
-				string response = await SendPromptAsync(prompt);
-				_logger.LogDebug("LLM response: {Response}", response);
-				suggestedItems = _responseProcessor.ExtractSuggestedItems(response, userMessage);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "An error occured while prompting the LLM.");
-				suggestedItems = null; // Reset suggestedItems to null to retry.
-			}
-
-			attempts++;
-		}
-
-		if (suggestedItems is null)
-		{
-			_logger.LogError("The relatedItems list is still null after " + _retryAttempts + " attempts.");
-			return [];
-		}
-
-		return suggestedItems;
 	}
 
 	public async Task<string> GenerateSuggestedMessageAsync(DataSpecification dataSpecification, UserMessage userMessage, DataSpecificationSubstructure substructure, List<DataSpecificationItem> selectedItems)
@@ -196,41 +237,6 @@ public class OllamaConnector : ILlmConnector
 	{
 		await Task.CompletedTask;
 		return "Item summary generation is deprecated.";
-	}
-
-	public async Task<string> SendTestPrompt(string prompt)
-	{
-		string? answer = null;
-		int attempts = 0;
-		while (attempts < _retryAttempts && answer is null)
-		{
-			try
-			{
-				_logger.LogDebug("Prompt attempt number {AttemptCount}", attempts + 1);
-				string response = await SendPromptAsync(prompt);
-				_logger.LogDebug("LLM response: {Response}", response);
-				answer = response;
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "An error occured while prompting the LLM.");
-				answer = null; // Reset mapped to null to retry
-			}
-		}
-
-		if (answer is null)
-		{
-			_logger.LogError("The answer is still null after " + _retryAttempts + " attempts.");
-			return string.Empty;
-		}
-		return answer;
-	}
-
-	public async Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
-		DataSpecification dataSpecification)
-	{
-		await Task.CompletedTask;
-		return null;
 	}
 
 	private async Task<string> SendPromptAsync(string prompt)

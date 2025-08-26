@@ -168,6 +168,7 @@ public class ConversationService(
 						itemsToAdd.Add(objectProperty.Range);
 					}
 				}
+				// To do: Need a summary for the extra added domains and ranges.
 
 				AddDataSpecItemsToConversationSubstructure(conversation, itemsToAdd, []); // No user selections at this point, so passing an empty list.
 			}

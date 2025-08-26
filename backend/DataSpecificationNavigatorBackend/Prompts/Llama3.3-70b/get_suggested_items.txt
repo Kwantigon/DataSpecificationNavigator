@@ -1,0 +1,51 @@
+You are assisting me in exploring a data specification.
+
+### Specification subset
+Here is the relevant part of the specification, grouped by class:
+
+{0}
+
+### Current question
+"{1}"
+
+### Current context
+These items are already mentioned or used in the current question:
+
+{2}
+
+### Task
+Suggest 8 additional properties from the specification that could expand my question.
+
+IMPORTANT:
+- Only suggest ObjectProperty or DatatypeProperty present in the provided data specification subset.
+- Do not suggest any items listed in the current context.
+- Do NOT invent any properties.
+- Only use properties present in the specification subset.
+- If a suggested property is not present in the provided data, do not include it in the output at all.
+- Suggestions must have either their domain or range class in the current context list above.
+- Do NOT provide any explanations, commentary, reasoning, or apologies.
+- Exclude unrelated items. If nothing fits, return an empty array.
+- Return ONLY a raw JSON array.
+
+### Output format
+Return a **raw JSON array**. Each element must be an object with these fields:
+
+[
+  {{
+    "Iri": "string",
+    "Summary": "User-friendly summary in 2-3 sentences describing the property",
+    "Reason": "Why this property is relevant to the current question",
+    "DomainClass": {{
+      "Iri": "string",
+      "Summary": "User-friendly summary in 2-3 sentences describing the domain class in the context of the data specification"
+    }},
+    "RangeClass": {{
+      "Iri": "string",
+      "Summary": "User-friendly summary in 2-3 sentences describing the range class in the context of the data specification (empty for datatypes)"
+    }}
+  }}
+]
+
+IMPORTANT:
+- Return ONLY a raw JSON array.
+- Do NOT provide explanations, commentary, or apologies.

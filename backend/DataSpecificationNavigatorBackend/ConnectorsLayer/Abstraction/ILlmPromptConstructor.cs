@@ -2,7 +2,7 @@
 
 namespace DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
 
-public interface IPromptConstructor
+public interface ILlmPromptConstructor
 {
 	string BuildMapToDataSpecificationPrompt(
 		DataSpecification dataSpecification,
@@ -12,7 +12,7 @@ public interface IPromptConstructor
 		DataSpecification dataSpecification, string userQuestion,
 		DataSpecificationSubstructure substructure);
 
-	string BuildGetSuggestedItemsPrompt(
+	string BuildGetSuggestedPropertiesPrompt(
 		DataSpecification dataSpecification, string userQuestion,
 		DataSpecificationSubstructure substructure);
 
@@ -21,6 +21,6 @@ public interface IPromptConstructor
 		DataSpecificationSubstructure substructure,
 		List<DataSpecificationItem> selectedItems);
 
-	string BuildWelcomeMessageDataSpecificationSummaryPrompt(
+	string BuildDataSpecificationSummaryPrompt(
 		DataSpecification dataSpecification);
 }

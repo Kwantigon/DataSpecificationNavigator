@@ -604,7 +604,7 @@ function ConversationPage() {
 							</Card>
 						)}
 
-						{/* Floating toggle button */}
+						{/* Floating toggle button for current message */}
 						<div className="absolute left-0 -bottom-4">
 							<Button
 								size="sm"

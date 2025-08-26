@@ -1,0 +1,48 @@
+You are a system that summarizes data specifications.
+
+### Data specification
+Here is the data specification as structured items extracted from an OWL file:
+
+{0}
+
+Each item may include:
+- `Iri`: identifier from OWL
+- `Label`: the class or property name
+- `Type`: Class, ObjectProperty, or DatatypeProperty
+- `OwlAnnotation`: annotation extracted from the OWL file
+- `RdfsComment`: comment extracted from the OWL file
+
+### Task
+1. Provide a **concise, user-friendly summary** (3–5 sentences) describing the main domain of this specification in plain English.
+   - Focus on what real-world entities it models (e.g., people, organizations, events, products) and how they relate.
+   - Avoid technical jargon such as "ontology", "object property", "domain", or "range".
+   - Write the summary so that a non-technical user can understand what kinds of questions the specification helps answer.
+
+2. Suggest **3–5 key classes** that would make good starting points for user queries.
+   - Select the most central or frequently connected classes based on the provided items.
+   - For each suggested class, provide its `Label` and a short `Reason` why it is important.
+
+IMPORTANT:
+- Only suggest classes present in the provided data specification.
+- Do NOT invent any classes.
+- Only use classes present in the specification.
+- If a suggested class is not present in the provided data, do not include it in the output at all.
+- Do NOT provide any explanations, commentary, reasoning, or apologies.
+- Return ONLY a raw JSON.
+- Avoid technical jargon such as "ontology", "object property", "domain", or "range".
+
+## Output format
+Return a **raw JSON object** with the following fields:
+{{
+	"Summary": "A user-friendly summary (3–5 sentences) describing the domain of the specification",
+	"SuggestedClasses": [
+		{{
+			"Label": "The class label",
+			"Reason": "A brief explanation of why this class is important"
+		}}
+	]
+}}
+
+IMPORTANT:
+- Return ONLY a raw JSON.
+- Do NOT provide explanations, commentary, or apologies.

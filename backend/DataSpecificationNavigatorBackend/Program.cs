@@ -5,7 +5,9 @@ using DataSpecificationNavigatorBackend.BusinessCoreLayer.Facade;
 using DataSpecificationNavigatorBackend.BusinessCoreLayer.SparqlTranslation;
 using DataSpecificationNavigatorBackend.ConnectorsLayer;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.Abstraction;
+using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
+using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.LLama3._3_70b;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,12 +25,14 @@ builder.Services
 	.AddScoped<IDataSpecificationService, DataSpecificationService>()
 	.AddScoped<IDataSpecificationController, DataSpecificationController>()
 	.AddScoped<IDataspecerConnector, DataspecerConnector>()
-	.AddScoped<ILlmConnector, GeminiConnector>()
-	//.AddScoped<ILlmConnector, OllamaConnector>()
-	.AddScoped<IRdfProcessor, RdfProcessor>()
+	/*.AddScoped<ILlmConnector, GeminiConnector>()
 	.AddScoped<ILlmResponseProcessor, GeminiResponseProcessor>()
+	.AddScoped<ILlmPromptConstructor, GeminiPromptConstructor>()*/
+	.AddScoped<ILlmConnector, OllamaConnector>()
+	.AddScoped<ILlmPromptConstructor, LlamaPromptConstructor>()
+	.AddScoped<ILlmResponseProcessor, LlamaResponseProcessor>()
+	.AddScoped<IRdfProcessor, RdfProcessor>()
 	.AddScoped<ISparqlTranslationService, SparqlTranslationService>()
-	.AddScoped<IPromptConstructor, GeminiPromptConstructor>()
 	;
 
 builder.Services.AddCors(options =>

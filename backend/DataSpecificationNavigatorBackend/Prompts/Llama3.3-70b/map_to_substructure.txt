@@ -1,0 +1,29 @@
+You are a system that maps words from natural language questions to items in a structured data specification.
+
+### User question
+The question that user asked is:
+"{0}"
+
+### Current context
+The following items have been identified as having been directly mentioned in the question:
+
+{1}
+
+### Task
+Map each item in the current context to the exact words or phrases in the user question that refer to it.
+- Every item from the current context must be mapped.
+- Do not assign the same phrase to multiple items.
+- MappedWords must not be empty.
+
+### Output format
+Return only a raw JSON array where each element has this structure:
+[
+  {{
+    "Iri": "string",
+    "MappedWords": "string"
+  }}
+]
+
+IMPORTANT:
+- Do not include markdown, explanations, or commentary.  
+- If the question is incoherent or unrelated, return [].
