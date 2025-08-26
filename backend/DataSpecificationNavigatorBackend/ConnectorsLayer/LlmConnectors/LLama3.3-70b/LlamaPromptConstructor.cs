@@ -258,7 +258,7 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 	private string SerializeSubstructureProximity(
 		DataSpecification dataSpecification,
 		List<ClassItem> currentClasses,
-		int maxHops = 1)
+		int maxHops = 4)
 	{
 		List<Object> classesList = new(); // List of anonymous objects.
 

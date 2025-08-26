@@ -13,7 +13,6 @@ Here is the data specification given as an OWL file:
    - Write the summary so that a non-technical end user immediately understands what kind of questions they can ask.
 
 2. Suggest **3–5 key classes** that would make good starting points for user queries.
-   - Choose the most central or frequently connected classes.
    - For each suggested class, provide both its label and a short reason why it’s important.
 
 ### Answer format

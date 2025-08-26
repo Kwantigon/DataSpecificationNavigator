@@ -19,7 +19,6 @@ Each item may include:
    - Write the summary so that a non-technical user can understand what kinds of questions the specification helps answer.
 
 2. Suggest **3–5 key classes** that would make good starting points for user queries.
-   - Select the most central or frequently connected classes based on the provided items.
    - For each suggested class, provide its `Label` and a short `Reason` why it is important.
 
 IMPORTANT:
