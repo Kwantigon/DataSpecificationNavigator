@@ -168,7 +168,7 @@ function renderMessageWithMappedItems(
 					<Popover>
 						<PopoverTrigger asChild>
 							<Button variant="link" size="sm" className="text-xs p-0 h-auto">
-								+{unanchoredItems.length} {unanchoredItems.length > 1 ? "items" : "item"} mapped from message
+								+{unanchoredItems.length} referenced {unanchoredItems.length > 1 ? "items" : "item"}
 							</Button>
 						</PopoverTrigger>
 						<PopoverContent className="w-64" side="top" align="start">

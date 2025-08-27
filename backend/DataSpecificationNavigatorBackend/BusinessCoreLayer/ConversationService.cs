@@ -691,41 +691,48 @@ public class ConversationService(
 				break;
 			}
 
-			// Take only those object properties that do not have the same
-			// iri and range as in 'llmSuggestions'.
+			// Take only those object properties that have not already been suggested.
 			List<ObjectPropertyItem> classItemIsDomain = _database.ObjectPropertyItems
 				.Where(property => property.DataSpecificationId == dataSpecificationId &&
 												property.DomainIri == classItem.Iri)
 				.ToList(); // Bring to memory before the 2nd .Where() because I'm doing type casting.
 			classItemIsDomain = classItemIsDomain
-				.Where(property => !llmSuggestions
-												.Any(s => s.SuggestedPropertyIri == property.Iri &&
+				.Where(property =>
+							!llmSuggestions.Any(s => s.SuggestedPropertyIri == property.Iri &&
+																	s.SuggestedProperty.Type == ItemType.ObjectProperty &&
+																	((ObjectPropertyItem)s.SuggestedProperty).RangeIri == property.RangeIri)
+						&& !manualSuggestions.Any(s => s.SuggestedPropertyIri == property.Iri &&
 																	s.SuggestedProperty.Type == ItemType.ObjectProperty &&
 																	((ObjectPropertyItem)s.SuggestedProperty).RangeIri == property.RangeIri))
 				.ToList();
 
-			// Take only those datatype properties that do not have the same
-			// iri and datatype as in 'llmSuggestions'.
+			// Take only those datatype properties that have not been suggested.
 			List<DatatypePropertyItem> datatypeProperties = _database.DatatypePropertyItems
 				.Where(property => property.DataSpecificationId == dataSpecificationId &&
 												property.DomainIri == classItem.Iri)
 				.ToList();
 			datatypeProperties = datatypeProperties
-				.Where(property => !llmSuggestions
-												.Any(s => s.SuggestedPropertyIri == property.Iri &&
+				.Where(property =>
+							!llmSuggestions.Any(s => s.SuggestedPropertyIri == property.Iri &&
+																	s.SuggestedProperty.Type == ItemType.DatatypeProperty &&
+																	((DatatypePropertyItem)s.SuggestedProperty).RangeDatatypeIri == property.RangeDatatypeIri)
+						&& !manualSuggestions.Any(s => s.SuggestedPropertyIri == property.Iri &&
 																	s.SuggestedProperty.Type == ItemType.DatatypeProperty &&
 																	((DatatypePropertyItem)s.SuggestedProperty).RangeDatatypeIri == property.RangeDatatypeIri))
 				.ToList();
 
-			// Take only those object properties that do not have the same
-			// iri and domain as in 'llmSuggestions'.
+
+			// Take only those object properties that have not already been suggested.
 			List<ObjectPropertyItem> classItemIsRange = _database.ObjectPropertyItems
 				.Where(property => property.DataSpecificationId == dataSpecificationId &&
 												property.RangeIri == classItem.Iri)
 				.ToList();
 			classItemIsRange = classItemIsRange
-				.Where(property => !llmSuggestions
-												.Any(s => s.SuggestedPropertyIri == property.Iri &&
+				.Where(property =>
+							!llmSuggestions.Any(s => s.SuggestedPropertyIri == property.Iri &&
+																	s.SuggestedProperty.Type == ItemType.ObjectProperty &&
+																	((ObjectPropertyItem)s.SuggestedProperty).DomainIri == property.DomainIri)
+						&& !manualSuggestions.Any(s => s.SuggestedPropertyIri == property.Iri &&
 																	s.SuggestedProperty.Type == ItemType.ObjectProperty &&
 																	((ObjectPropertyItem)s.SuggestedProperty).DomainIri == property.DomainIri))
 				.ToList();
