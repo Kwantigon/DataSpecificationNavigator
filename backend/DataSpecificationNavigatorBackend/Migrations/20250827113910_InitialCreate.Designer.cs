@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataSpecificationNavigatorBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250818144641_InitialCreate")]
+    [Migration("20250827113910_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -94,6 +94,14 @@ namespace DataSpecificationNavigatorBackend.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OwlAnnotation")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RdfsComment")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Summary")
                         .HasColumnType("TEXT");
 
@@ -120,9 +128,6 @@ namespace DataSpecificationNavigatorBackend.Migrations
                     b.Property<Guid>("UserMessageId")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsSelectTarget")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("MappedWords")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -136,22 +141,29 @@ namespace DataSpecificationNavigatorBackend.Migrations
 
             modelBuilder.Entity("DataSpecificationNavigatorBackend.Model.DataSpecificationPropertySuggestion", b =>
                 {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("PropertyDataSpecificationId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("SuggestedPropertyIri")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserMessageId")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("ReasonForSuggestion")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("PropertyDataSpecificationId", "SuggestedPropertyIri", "UserMessageId");
+                    b.Property<string>("SuggestedPropertyIri")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserMessageId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("UserMessageId");
+
+                    b.HasIndex("PropertyDataSpecificationId", "SuggestedPropertyIri");
 
                     b.ToTable("PropertySuggestions");
                 });
@@ -204,9 +216,6 @@ namespace DataSpecificationNavigatorBackend.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsOptional")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsSelectTarget")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SelectedPropertyIri")
@@ -292,6 +301,13 @@ namespace DataSpecificationNavigatorBackend.Migrations
             modelBuilder.Entity("DataSpecificationNavigatorBackend.Model.WelcomeMessage", b =>
                 {
                     b.HasBaseType("DataSpecificationNavigatorBackend.Model.Message");
+
+                    b.Property<string>("DataSpecificationSummary")
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("SuggestedClasses")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasDiscriminator().HasValue("WelcomeMessage");
                 });

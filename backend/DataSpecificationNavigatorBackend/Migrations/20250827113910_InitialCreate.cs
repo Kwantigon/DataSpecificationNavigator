@@ -58,6 +58,8 @@ namespace DataSpecificationNavigatorBackend.Migrations
                     Label = table.Column<string>(type: "TEXT", nullable: false),
                     Type = table.Column<int>(type: "INTEGER", nullable: false),
                     Summary = table.Column<string>(type: "TEXT", nullable: true),
+                    OwlAnnotation = table.Column<string>(type: "TEXT", nullable: false),
+                    RdfsComment = table.Column<string>(type: "TEXT", nullable: false),
                     Discriminator = table.Column<string>(type: "TEXT", maxLength: 21, nullable: false),
                     DomainIri = table.Column<string>(type: "TEXT", nullable: true),
                     RangeDatatypeIri = table.Column<string>(type: "TEXT", nullable: true),
@@ -103,7 +105,9 @@ namespace DataSpecificationNavigatorBackend.Migrations
                     SuggestedPropertiesIri = table.Column<string>(type: "TEXT", nullable: true),
                     SparqlText = table.Column<string>(type: "TEXT", nullable: true),
                     SparqlQuery = table.Column<string>(type: "TEXT", nullable: true),
-                    ReplyMessageId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    ReplyMessageId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    DataSpecificationSummary = table.Column<string>(type: "TEXT", nullable: true),
+                    SuggestedClasses = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -137,7 +141,6 @@ namespace DataSpecificationNavigatorBackend.Migrations
                     ConversationId = table.Column<int>(type: "INTEGER", nullable: false),
                     SelectedPropertyIri = table.Column<string>(type: "TEXT", nullable: false),
                     IsOptional = table.Column<bool>(type: "INTEGER", nullable: false),
-                    IsSelectTarget = table.Column<bool>(type: "INTEGER", nullable: false),
                     FilterExpression = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -158,8 +161,7 @@ namespace DataSpecificationNavigatorBackend.Migrations
                     ItemDataSpecificationId = table.Column<int>(type: "INTEGER", nullable: false),
                     ItemIri = table.Column<string>(type: "TEXT", nullable: false),
                     UserMessageId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    MappedWords = table.Column<string>(type: "TEXT", nullable: false),
-                    IsSelectTarget = table.Column<bool>(type: "INTEGER", nullable: false)
+                    MappedWords = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -182,6 +184,7 @@ namespace DataSpecificationNavigatorBackend.Migrations
                 name: "PropertySuggestions",
                 columns: table => new
                 {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     PropertyDataSpecificationId = table.Column<int>(type: "INTEGER", nullable: false),
                     SuggestedPropertyIri = table.Column<string>(type: "TEXT", nullable: false),
                     UserMessageId = table.Column<Guid>(type: "TEXT", nullable: false),
@@ -189,7 +192,7 @@ namespace DataSpecificationNavigatorBackend.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PropertySuggestions", x => new { x.PropertyDataSpecificationId, x.SuggestedPropertyIri, x.UserMessageId });
+                    table.PrimaryKey("PK_PropertySuggestions", x => x.Id);
                     table.ForeignKey(
                         name: "FK_PropertySuggestions_DataSpecificationItems_PropertyDataSpecificationId_SuggestedPropertyIri",
                         columns: x => new { x.PropertyDataSpecificationId, x.SuggestedPropertyIri },
@@ -240,6 +243,11 @@ namespace DataSpecificationNavigatorBackend.Migrations
                 table: "Messages",
                 column: "ReplyMessageId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PropertySuggestions_PropertyDataSpecificationId_SuggestedPropertyIri",
+                table: "PropertySuggestions",
+                columns: new[] { "PropertyDataSpecificationId", "SuggestedPropertyIri" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertySuggestions_UserMessageId",
