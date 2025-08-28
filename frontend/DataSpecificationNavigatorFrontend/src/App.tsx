@@ -5,10 +5,10 @@ import ConversationManagementPage from "@/pages/ConversationManagementPage";
 import AboutPage from "./pages/AboutPage";
 
 function App() {
-	const basePath = import.meta.env.VITE_BASE_PATH || "/";
+	const baseUrl = import.meta.env.VITE_BASE_URL || "/";
 
 	return (
-		<Router basename={basePath}>
+		<Router basename={baseUrl}>
 			<div className="flex flex-col h-screen">
 				<header className="flex items-center justify-between p-4 border-b">
 					<h1 className="text-xl font-bold">Data specification navigator</h1>
