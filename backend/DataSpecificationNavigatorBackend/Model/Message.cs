@@ -50,13 +50,5 @@ public class ReplyMessage : Message
 
 	public required Guid PrecedingUserMessageId { get; set; } // For Entity Framework configuration.
 	public virtual required UserMessage PrecedingUserMessage { get; set; }
-
-	public required string MappingText { get; set; }
-	public List<string> MappedItemsIri { get; set; } = [];
-
-	public required string SuggestPropertiesText { get; set; }
-	public List<string> SuggestedPropertiesIri { get; set; } = [];
-
-	public required string SparqlText { get; set; }
 	public string? SparqlQuery { get; set; }
 }

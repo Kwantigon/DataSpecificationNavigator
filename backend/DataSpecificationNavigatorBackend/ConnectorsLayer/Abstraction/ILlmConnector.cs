@@ -24,10 +24,10 @@ public interface ILlmConnector
 		DataSpecificationSubstructure substructure,
 		List<DataSpecificationItem> selectedItems);
 
-	Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
+	Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestionsAsync(
 		DataSpecification dataSpecification);
 
-	Task GenerateItemSummaries(
+	Task GenerateItemSummariesAsync(
 		DataSpecification dataSpecification,
 		List<DataSpecificationItem> dataSpecificationItems);
 }

@@ -12,18 +12,87 @@ namespace DataSpecificationNavigator.Tests.BusinessCoreLayer;
 public class DataSpecificationServiceTests
 {
 	[Fact]
-	public async Task Test1()
+	public async Task ExportDataSpecificationFromDataspecerTestAsync_ExpectsFourItems()
 	{
 		#region Arrange
-		string dsvContent;
-		try
-		{
-			dsvContent = File.ReadAllText("TestData/mock-dsv.ttl");
-		}
-		catch (Exception ex)
-		{
-			throw new Exception("Failed to read the mock DSV file.", ex);
-		}
+		string dsvContent = """
+			@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+			@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+			@prefix dct: <http://purl.org/dc/terms/>.
+			@prefix dsv: <https://w3id.org/dsv#>.
+			@prefix owl: <http://www.w3.org/2002/07/owl#>.
+			@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+			@prefix vann: <http://purl.org/vocab/vann/>.
+			@prefix cardinality: <https://w3id.org/dsv/cardinality#>.
+			@prefix requirement: <https://w3id.org/dsv/requirement-level#>.
+			@prefix role: <https://w3id.org/dsv/class-role#>.
+			@prefix prof: <http://www.w3.org/ns/dx/prof/>.
+			@prefix : <http://www.example.unit-test.com/>.
+
+			<> a prof:Profile, dsv:ApplicationProfile.
+
+			<turistický-cíl> dct:isPartOf <>;
+			    a dsv:TermProfile;
+			    dsv:reusesPropertyValue [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:prefLabel;
+			  dsv:reusedFromResource <https://slovník.gov.cz/datový/turistické-cíle/pojem/turistický-cíl>
+			], [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:definition;
+			  dsv:reusedFromResource <https://slovník.gov.cz/datový/turistické-cíle/pojem/turistický-cíl>
+			];
+			    a dsv:ClassProfile;
+			    dsv:class <https://slovník.gov.cz/datový/turistické-cíle/pojem/turistický-cíl>.
+
+			<bezbariérový-přístup> dct:isPartOf <>;
+			    a dsv:TermProfile;
+			    dsv:reusesPropertyValue [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:prefLabel;
+			  dsv:reusedFromResource <https://slovník.gov.cz/generický/bezbariérové-přístupy/pojem/bezbariérový-přístup>
+			], [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:definition;
+			  dsv:reusedFromResource <https://slovník.gov.cz/generický/bezbariérové-přístupy/pojem/bezbariérový-přístup>
+			];
+			    a dsv:ClassProfile;
+			    dsv:class <https://slovník.gov.cz/generický/bezbariérové-přístupy/pojem/bezbariérový-přístup>.
+
+			<bezbariérovost> dct:isPartOf <>;
+			    a dsv:TermProfile;
+			    dsv:reusesPropertyValue [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:prefLabel;
+			  dsv:reusedFromResource <https://slovník.gov.cz/datový/turistické-cíle/pojem/bezbariérovost>
+			], [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:definition;
+			  dsv:reusedFromResource <https://slovník.gov.cz/datový/turistické-cíle/pojem/bezbariérovost>
+			];
+			    dsv:cardinality cardinality:0n;
+			    dsv:property <https://slovník.gov.cz/datový/turistické-cíle/pojem/bezbariérovost>;
+			    dsv:domain <turistický-cíl>;
+			    a dsv:ObjectPropertyProfile;
+			    dsv:objectPropertyRange <bezbariérový-přístup>.
+
+			<kapacita> dct:isPartOf <>;
+			    a dsv:TermProfile;
+			    dsv:reusesPropertyValue [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:prefLabel;
+			  dsv:reusedFromResource <https://slovník.gov.cz/datový/sportoviště/pojem/kapacita>
+			], [
+			  a dsv:PropertyValueReuse;
+			  dsv:reusedProperty skos:definition;
+			  dsv:reusedFromResource <https://slovník.gov.cz/datový/sportoviště/pojem/kapacita>
+			];
+			    dsv:cardinality cardinality:0n;
+			    dsv:property <https://slovník.gov.cz/datový/sportoviště/pojem/kapacita>;
+			    dsv:domain <turistický-cíl>;
+			    a dsv:DatatypePropertyProfile;
+			    dsv:datatypePropertyRange rdfs:Literal.
+			""";
 
 		// Mock the DataspecerConnector to return the DSV content.
 		var mockDataspecerConnector = new Mock<IDataspecerConnector>();
@@ -70,16 +139,34 @@ public class DataSpecificationServiceTests
 		Assert.NotEmpty(dataSpecification.OwlContent);
 
 		// Check if the items were correctly extracted.
-		var items = await appDbContext.DataSpecificationItems.ToListAsync();
-		Assert.Equal(3, items.Count);
-		Assert.All(items, item => Assert.NotNull(item.Iri));
-		Assert.All(items, item => Assert.NotNull(item.Label));
 
-		// Check if the classes and properties were correctly identified.
-		var classes = items.Where(item => item.Type == ItemType.Class).ToList();
-		var properties = items.Where(item => item.Type != ItemType.Class).ToList();
-		Assert.Equal(2, classes.Count);
-		Assert.Single(properties);
+		var classItems = await appDbContext.ClassItems.ToListAsync();
+		Assert.Equal(2, classItems.Count);
+
+		var objectProperties = await appDbContext.ObjectPropertyItems.ToListAsync();
+		Assert.Single(objectProperties);
+		ObjectPropertyItem objectProperty = objectProperties.First();
+		Assert.Equal(dataSpecification.Id, objectProperty.DataSpecificationId);
+		Assert.False(string.IsNullOrWhiteSpace(objectProperty.Iri));
+		Assert.False(string.IsNullOrWhiteSpace(objectProperty.Label));
+
+		ClassItem domain = objectProperty.Domain;
+		Assert.Equal(dataSpecification.Id, domain.DataSpecificationId);
+		Assert.False(string.IsNullOrWhiteSpace(domain.Iri));
+		Assert.False(string.IsNullOrWhiteSpace(domain.Label));
+
+		ClassItem range = objectProperty.Range;
+		Assert.Equal(dataSpecification.Id, range.DataSpecificationId);
+		Assert.False(string.IsNullOrWhiteSpace(range.Iri));
+		Assert.False(string.IsNullOrWhiteSpace(range.Label));
+
+		var datatypeProperties = await appDbContext.DatatypePropertyItems.ToListAsync();
+		Assert.Single(datatypeProperties);
+		DatatypePropertyItem datatypeProperty = datatypeProperties.First();
+		Assert.False(string.IsNullOrWhiteSpace(datatypeProperty.Iri));
+		Assert.False(string.IsNullOrWhiteSpace(datatypeProperty.Label));
+		Assert.Equal(domain, datatypeProperty.Domain);
+
 		#endregion Assert
 	}
 }

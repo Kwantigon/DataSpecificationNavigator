@@ -155,7 +155,7 @@ public class GeminiConnector : ILlmConnector
 		return itemSummary;
 	}
 
-	public async Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestions(
+	public async Task<WelcomeMessageDataSpecificationSummaryJson?> GetDataSpecificationSummaryAndClassSuggestionsAsync(
 		DataSpecification dataSpecification)
 	{
 		_logger.LogDebug("Generating a summary and class suggestions for the first message.");
@@ -186,7 +186,7 @@ public class GeminiConnector : ILlmConnector
 		return result;
 	}
 
-	public async Task GenerateItemSummaries(
+	public async Task GenerateItemSummariesAsync(
 		DataSpecification dataSpecification,
 		List<DataSpecificationItem> dataSpecificationItems)
 	{

@@ -43,7 +43,7 @@ public class ConversationService(
 		List<string> suggestedClasses = new();
 		try
 		{
-			var llmResponse = await _llmConnector.GetDataSpecificationSummaryAndClassSuggestions(dataSpecification);
+			var llmResponse = await _llmConnector.GetDataSpecificationSummaryAndClassSuggestionsAsync(dataSpecification);
 			if (llmResponse is null)
 			{
 				textContent += "\nYou can start exploring by asking about any of the main classes in your specification.";
@@ -119,9 +119,7 @@ public class ConversationService(
 		if (string.IsNullOrWhiteSpace(conversation.SuggestedMessage) ||
 				userMessage.TextContent.ToLower() != conversation.SuggestedMessage.ToLower())
 		{
-			// If suggested message is null or whitespace, it means that the user has not selected any of the suggested properties.
-			// If the user message is not the same as the suggested message, then the user has modified the suggested message.
-			// In both cases, we need treat the user message as a completely new mesage and map it to the data specification items.
+			// A completely new message. We have to map to data specification.
 			List<DataSpecificationItemMapping> mappings = await MapToDataSpecificationAsync(conversation.DataSpecification, userMessage);
 			RemoveDuplicateMappedWords(mappings);
 			mappingsCount = mappings.Count;
@@ -183,7 +181,7 @@ public class ConversationService(
 					List<DataSpecificationItem> missingClasses = manuallyMapped
 						.Select(m => m.Item)
 						.ToList();
-					await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, missingClasses);
+					await _llmConnector.GenerateItemSummariesAsync(conversation.DataSpecification, missingClasses);
 					itemsToAdd.AddRange(missingClasses);
 				}
 				
@@ -316,10 +314,18 @@ public class ConversationService(
 					}
 				}
 			}
-			await _llmConnector.GenerateItemSummaries(conversation.DataSpecification, itemsWithoutSummary);
+			if (itemsWithoutSummary.Count > 0)
+			{
+				await _llmConnector.GenerateItemSummariesAsync(conversation.DataSpecification, itemsWithoutSummary);
+			}
+		}
+		else
+		{
+			// Nothing mapped so substructure should be empty.
+			conversation.DataSpecificationSubstructure.ClassItems.Clear();
 		}
 
-		conversation.UserSelections.Clear();
+			conversation.UserSelections.Clear();
 		conversation.SuggestedMessage = null;
 
 		// Remove all previous user selections because a new user message has been added.
@@ -331,36 +337,16 @@ public class ConversationService(
 	public async Task<ReplyMessage?> GenerateReplyMessageAsync(UserMessage userMessage)
 	{
 		ReplyMessage? replyMessage = null;
-		List<DataSpecificationItemMapping> itemMappings = await _database.ItemMappings
+		int mappingsCount = await _database.ItemMappings
 			.Where(mapping => mapping.UserMessageId == userMessage.Id)
-			.ToListAsync();
-		if (itemMappings.Count > 0)
+			.CountAsync();
+		if (mappingsCount > 0)
 		{
-			string mappingText = "I have identified the following items from your data specification which play a role in your message.";
-			List<string> mappedIris = itemMappings
-				.Select(mapping => mapping.Item.Iri)
-				.ToList();
-
-			string sparqlText = "I have formulated a Sparql query for you:";
 			string sparqlQuery = _sparqlTranslationService.TranslateSubstructure(userMessage.Conversation.DataSpecificationSubstructure);
 
 			List<DataSpecificationPropertySuggestion> suggestions = await _database.PropertySuggestions
 				.Where(suggestion => suggestion.UserMessageId == userMessage.Id)
 				.ToListAsync();
-
-			List<string> suggestedIris = [];
-			string? suggestPropertiesText;
-			if (suggestions.Count == 0)
-			{
-				suggestPropertiesText = "Unfortunately, I did not manage to find any suitable items to suggest to you to further expand your message.";
-			}
-			else
-			{
-				suggestPropertiesText = "I found some items in the data specification which could be of interest to you.";
-				suggestedIris = suggestions
-					.Select(suggestion => suggestion.SuggestedPropertyIri)
-					.ToList();
-			}
 
 			replyMessage = new()
 			{
@@ -369,10 +355,6 @@ public class ConversationService(
 				PrecedingUserMessageId = userMessage.Id,
 				PrecedingUserMessage = userMessage,
 				TextContent = "I have processed your message and found some relevant information.",
-				MappingText = mappingText,
-				MappedItemsIri = mappedIris,
-				SuggestPropertiesText = suggestPropertiesText,
-				SparqlText = sparqlText,
 				SparqlQuery = sparqlQuery
 			};
 		}
@@ -385,9 +367,6 @@ public class ConversationService(
 				PrecedingUserMessageId = userMessage.Id,
 				PrecedingUserMessage = userMessage,
 				TextContent = "I could not find any relevant information in the data specification for your message.",
-				MappingText = "No items were mapped from your message.",
-				SuggestPropertiesText = "No suggestions could be made.",
-				SparqlText = "No Sparql query was generated.",
 				SparqlQuery = string.Empty
 			};
 		}
@@ -459,10 +438,7 @@ public class ConversationService(
 		}
 
 		string suggestedMessage = await _llmConnector.GenerateSuggestedMessageAsync(conversation.DataSpecification, userMessage, conversation.DataSpecificationSubstructure, itemsToAdd);
-		/*await _database.UserSelections
-			.Where(s => s.ConversationId == conversation.Id)
-			.ExecuteDeleteAsync();*/
-
+		
 		// Remove all previous selections before adding the newly updated ones.
 		_database.UserSelections.RemoveRange(conversation.UserSelections);
 

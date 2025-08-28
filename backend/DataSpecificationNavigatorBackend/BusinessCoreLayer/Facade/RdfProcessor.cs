@@ -108,55 +108,64 @@ public class RdfProcessor(
 
 					if (reusedPropertyNode == null || reusedFromResourceNode == null)
 					{
-						//_logger.LogError("Either `reusedPropertyNode` or `reusedFromResourceNode` is null.");
 						continue;
 					}
 					else if (reusedPropertyNode.NodeType != NodeType.Uri || reusedFromResourceNode.NodeType != NodeType.Uri)
 					{
-						//_logger.LogError("Either reusedPropertyNode or reusedFromResourceNode is not of NodeType.Uri");
 						continue;
 					}
 
-					IGraph reusedResourceGraph = new Graph();
-					string reusedResourceUri = ((UriNode)reusedFromResourceNode).Uri.ToString();
-					if (reusedResourceUri.StartsWith("https://slovník.gov.cz"))
+					try
 					{
-						/*
-						 * https://slovník.gov.cz endpoint does not return turtle.
-						 * The turtle endpoint is https://xn--slovnk-7va.gov.cz/sparql?query=define%20sql%3Adescribe-mode%20%22CBD%22%20%20DESCRIBE%20%3C...........%3E&output=text%2Fturtle
-						 */
-						reusedResourceGraph.LoadFromUri(GetSlovnikGovRdfEndpointUri(reusedResourceUri));
-					}
-					else
-					{
-						reusedResourceGraph.LoadFromUri(new Uri(reusedResourceUri));
-					}
-
-					IUriNode? uriNodeToLookFor = reusedResourceGraph.GetUriNode(((UriNode)reusedPropertyNode).Uri);
-					if (uriNodeToLookFor is not null)
-					{
-						Triple? reusedPropertyTriple = reusedResourceGraph.GetTriplesWithPredicate(uriNodeToLookFor).FirstOrDefault();
-						if (reusedPropertyTriple is not null)
+						IGraph reusedResourceGraph = new Graph();
+						string reusedResourceUri = ((UriNode)reusedFromResourceNode).Uri.ToString();
+						if (reusedResourceUri.StartsWith("https://slovník.gov.cz"))
 						{
-							if (uriNodeToLookFor.Uri.ToString() == SKOS_PREF_LABEL)
+							/*
+							 * https://slovník.gov.cz endpoint does not return turtle.
+							 * The turtle endpoint is https://xn--slovnk-7va.gov.cz/sparql?query=define%20sql%3Adescribe-mode%20%22CBD%22%20%20DESCRIBE%20%3C...........%3E&output=text%2Fturtle
+							 */
+							Uri reusedGraphUri = GetSlovnikGovRdfEndpointUri(reusedResourceUri);
+							reusedResourceGraph.LoadFromUri(reusedGraphUri);
+						}
+						else
+						{
+							reusedResourceGraph.LoadFromUri(new Uri(reusedResourceUri));
+						}
+
+						IUriNode? uriNodeToLookFor = reusedResourceGraph.GetUriNode(((UriNode)reusedPropertyNode).Uri);
+						if (uriNodeToLookFor is not null)
+						{
+							Triple? reusedPropertyTriple = reusedResourceGraph.GetTriplesWithPredicate(uriNodeToLookFor).FirstOrDefault();
+							if (reusedPropertyTriple is not null)
 							{
-								ILiteralNode literalNode = (LiteralNode)reusedPropertyTriple.Object;
-								owlGraph.Assert(
-									subjectNode,
-									owlGraph.CreateUriNode("rdfs:label"),
-									owlGraph.CreateLiteralNode(literalNode.Value, literalNode.Language)
-								);
-							}
-							if (uriNodeToLookFor.Uri.ToString() == SKOS_PREF_DEFINITION)
-							{
-								ILiteralNode literalNode = (LiteralNode)reusedPropertyTriple.Object;
-								owlGraph.Assert(
-									subjectNode,
-									owlGraph.CreateUriNode("owl:AnnotationProperty"),
-									owlGraph.CreateLiteralNode(literalNode.Value, literalNode.Language)
-								);
+								if (uriNodeToLookFor.Uri.ToString() == SKOS_PREF_LABEL)
+								{
+									ILiteralNode literalNode = (LiteralNode)reusedPropertyTriple.Object;
+									owlGraph.Assert(
+										subjectNode,
+										owlGraph.CreateUriNode("rdfs:label"),
+										owlGraph.CreateLiteralNode(literalNode.Value, literalNode.Language)
+									);
+								}
+								if (uriNodeToLookFor.Uri.ToString() == SKOS_PREF_DEFINITION)
+								{
+									ILiteralNode literalNode = (LiteralNode)reusedPropertyTriple.Object;
+									owlGraph.Assert(
+										subjectNode,
+										owlGraph.CreateUriNode("owl:AnnotationProperty"),
+										owlGraph.CreateLiteralNode(literalNode.Value, literalNode.Language)
+									);
+								}
 							}
 						}
+					}
+					catch (Exception ex)
+					{
+						// Might have been some HTTP error.
+						// Move onto the next triple.
+						_logger.LogError(ex, "An exception occurred while retrieving a reused resource in DSV.");
+						continue;
 					}
 
 					if (predicateUri == DSV_CARDINALITY)

@@ -25,12 +25,12 @@ builder.Services
 	.AddScoped<IDataSpecificationService, DataSpecificationService>()
 	.AddScoped<IDataSpecificationController, DataSpecificationController>()
 	.AddScoped<IDataspecerConnector, DataspecerConnector>()
-	/*.AddScoped<ILlmConnector, GeminiConnector>()
+	.AddScoped<ILlmConnector, GeminiConnector>()
 	.AddScoped<ILlmResponseProcessor, GeminiResponseProcessor>()
-	.AddScoped<ILlmPromptConstructor, GeminiPromptConstructor>()*/
-	.AddScoped<ILlmConnector, OllamaConnector>()
+	.AddScoped<ILlmPromptConstructor, GeminiPromptConstructor>()
+	/*.AddScoped<ILlmConnector, OllamaConnector>()
 	.AddScoped<ILlmPromptConstructor, LlamaPromptConstructor>()
-	.AddScoped<ILlmResponseProcessor, LlamaResponseProcessor>()
+	.AddScoped<ILlmResponseProcessor, LlamaResponseProcessor>()*/
 	.AddScoped<IRdfProcessor, RdfProcessor>()
 	.AddScoped<ISparqlTranslationService, SparqlTranslationService>()
 	;
