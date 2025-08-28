@@ -101,7 +101,16 @@ app.MapGet("/hello", (IConfiguration config) =>
 			ollamaModel = "MISSING";
 	}
 
-	int retryAttempts = config.GetValue("Env:Llm:Ollama:RetryAttempts", config.GetValue("Llm:Ollama:RetryAttempts", -1));
+	string? retryAttemptsStr = config["Env:Llm:Ollama:RetryAttempts"];
+	int retryAttempts = -1;
+	if (string.IsNullOrWhiteSpace(retryAttemptsStr))
+	{
+		retryAttempts = config.GetValue("Llm:Ollama:RetryAttempts", 3);
+	}
+	else
+	{
+		retryAttempts = int.TryParse(retryAttemptsStr, out int parsedRetries) ? parsedRetries : 3;
+	}
 	#endregion Ollama configuration
 
 	return Results.Ok(new

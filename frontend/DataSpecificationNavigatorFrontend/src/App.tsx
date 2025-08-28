@@ -5,8 +5,10 @@ import ConversationManagementPage from "@/pages/ConversationManagementPage";
 import AboutPage from "./pages/AboutPage";
 
 function App() {
+	const basePath = import.meta.env.VITE_BASE_PATH || "/";
+
 	return (
-		<Router>
+		<Router basename={basePath}>
 			<div className="flex flex-col h-screen">
 				<header className="flex items-center justify-between p-4 border-b">
 					<h1 className="text-xl font-bold">Data specification navigator</h1>
@@ -27,7 +29,7 @@ function App() {
 				</header>
 				<main className="flex-1 overflow-auto">
 					<Routes>
-						<Route path="/" element={<AboutPage/>}/>
+						<Route path="/" element={<ConversationManagementPage/>}/>
 						<Route path="/about" element={<AboutPage/>}/>
 						<Route path="/conversation/:conversationId" element={<ConversationPage/>}/>
 						<Route path="/manage-conversations" element={<ConversationManagementPage/>}/>
