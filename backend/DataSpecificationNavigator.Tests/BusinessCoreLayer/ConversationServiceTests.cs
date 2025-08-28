@@ -20,6 +20,16 @@ public class ConversationServiceTests
 		return new AppDbContext(dbOptions);
 	}
 
+	/// <summary>
+	/// Data specification has 2 items, 1 object property
+	/// and 1 datatype property.<br/>
+	/// Result:<br/>
+	/// The created conversation must have exactly 1 message,
+	/// which is the welcome message.<br/>
+	/// Welcome message must say that there are 2 items and 3 properties
+	/// in the data specification.<br/>
+	/// The substructure, suggested message and user selections must be empty.
+	/// </summary>
 	[Fact]
 	public async Task StartNewConversationTestAsync()
 	{
@@ -143,6 +153,15 @@ public class ConversationServiceTests
 		#endregion Assert
 	}
 
+	/// <summary>
+	/// Conversation's suggested message is null.<br/>
+	/// The LLM maps message to 1 property in the data specification.<br/>
+	/// Result:<br/>
+	/// The range and domain of the mapped property must also be manually mapped
+	/// (so 3 mapped items in total).<br/>
+	/// The manually mapped items must have empty MappedWords property.<br/>
+	/// All 3 mapped items must be in the conversation's substructure.
+	/// </summary>
 	[Fact]
 	public async Task AddUserMessageTestAsync_NotSuggestedMessage()
 	{
@@ -304,7 +323,8 @@ public class ConversationServiceTests
 	}
 
 	/// <summary>
-	/// Conversation has 1 class item in the substructure.<br/>
+	/// User sends the suggested message.<br/>
+	/// The conversation has 1 class item in the substructure.<br/>
 	/// User selected 1 object property and 1 datatype property.<br/>
 	/// LLM returns mapping to substructure
 	/// only for datatype property.<br/>
@@ -546,6 +566,12 @@ public class ConversationServiceTests
 		#endregion Assert
 	}
 
+	/// <summary>
+	/// There is no item mapping in the database for the user message.<br/>
+	/// Result:<br/>
+	/// The reply message does not contain a SPARQL query.
+	/// In fact, the method for SPARQL query generation must not be called.
+	/// </summary>
 	[Fact]
 	public async Task GenerateReplyMessageTestAsync_NoMappedItemsFound()
 	{
@@ -615,6 +641,12 @@ public class ConversationServiceTests
 		#endregion Assert
 	}
 
+	/// <summary>
+	/// Some data specification items have been mapped.<br/>
+	/// Result:<br/>
+	/// The SPARQL generation method was called and the reply message
+	/// contains the generated query.
+	/// </summary>
 	[Fact]
 	public async Task GenerateReplyMessageTestAsync_MappedItemsExist()
 	{
@@ -708,9 +740,313 @@ public class ConversationServiceTests
 		#endregion Assert
 	}
 
+	/// <summary>
+	/// Conversation already contains 4 user selected items.<br/>
+	/// User changes selection to 2 items.<br/>
+	/// Result:<br/>
+	/// The conversation now contains only the 2 items selected.
+	/// </summary>
 	[Fact]
-	public async Task UpdateSelectedPropertiesAndGenerateSuggestedMessageTestAsync()
+	public async Task UpdateSelectedPropertiesAndGenerateSuggestedMessageTestAsync_AlreadyContainsSelectedItems()
 	{
+		#region Arrange
+		// Create a logger instance.
+		var logger = LoggerFactory.Create(builder =>
+		{
+			builder.AddConsole();
+			builder.SetMinimumLevel(LogLevel.Trace);
+		}).CreateLogger<ConversationService>();
 
+		var database = CreateInMemoryDb();
+
+		var llmConnectorMock = new Mock<ILlmConnector>();
+		llmConnectorMock
+			.Setup(llm => llm.GenerateSuggestedMessageAsync(
+								It.IsAny<DataSpecification>(),
+								It.IsAny<UserMessage>(),
+								It.IsAny<DataSpecificationSubstructure>(),
+								It.IsAny<List<DataSpecificationItem>>()))
+			.ReturnsAsync("Mock suggested message");
+
+		var sparqlTranslationServiceMock = new Mock<ISparqlTranslationService>();
+
+		var dataSpecification = new DataSpecification()
+		{
+			Id = 1,
+			DataspecerPackageUuid = "mock-uuid",
+			Name = "Mock data specification",
+			OwlContent = "Mock OWL value"
+		};
+		var conversation = new Conversation()
+		{
+			DataSpecification = dataSpecification,
+			Title = "Mock conversation"
+		};
+		conversation.AddMessage(new WelcomeMessage()
+		{
+			Conversation = conversation,
+			TextContent = "Mock welcome message",
+			Timestamp = DateTime.Now
+		});
+		conversation.AddMessage(new UserMessage()
+		{
+			Conversation = conversation,
+			TextContent = "Mock welcome message",
+			Timestamp = DateTime.Now
+		});
+		conversation.UserSelections = [
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = "mock iri",
+			},
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = "mock iri",
+			},
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = "mock iri",
+			},
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = "mock iri",
+			}
+		];
+
+		var classItem = new ClassItem()
+		{
+			Iri = "http://mock.com/class-items#mock",
+			Label = "Class item mock",
+			Type = ItemType.Class,
+			OwlAnnotation = string.Empty,
+			RdfsComment = string.Empty,
+			DataSpecificationId = 1,
+			DataSpecification = dataSpecification
+		};
+		var dtProperty1 = new DatatypePropertyItem()
+		{
+			Iri = "http://mock.com/datatype-properties#one",
+			Label = "Datatype property one",
+			Type = ItemType.ObjectProperty,
+			OwlAnnotation = string.Empty,
+			RdfsComment = string.Empty,
+			DomainIri = classItem.Iri,
+			Domain = classItem,
+			RangeDatatypeIri = "http://mock.com/simple-types#Literal",
+			DataSpecificationId = 1,
+			DataSpecification = dataSpecification
+		};
+		var dtProperty2 = new DatatypePropertyItem()
+		{
+			Iri = "http://mock.com/datatype-properties#two",
+			Label = "Datatype property two",
+			Type = ItemType.ObjectProperty,
+			OwlAnnotation = string.Empty,
+			RdfsComment = string.Empty,
+			DomainIri = classItem.Iri,
+			Domain = classItem,
+			RangeDatatypeIri = "http://mock.com/simple-types#Literal",
+			DataSpecificationId = 1,
+			DataSpecification = dataSpecification
+		};
+
+		await database.DataSpecifications.AddAsync(dataSpecification);
+		await database.Conversations.AddAsync(conversation);
+		await database.DataSpecificationItems.AddRangeAsync([classItem, dtProperty1, dtProperty2]);
+
+		HashSet<string> selectedIris = [dtProperty1.Iri, dtProperty2.Iri];
+		List<UserSelection> userSelections = [
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = dtProperty1.Iri,
+				FilterExpression = "{?var} = 0"
+			},
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = dtProperty2.Iri,
+				IsOptional = true
+			}
+		];
+		#endregion Arrange
+
+		#region Act
+		var conversationService = new ConversationService(
+			logger,
+			database,
+			llmConnectorMock.Object,
+			sparqlTranslationServiceMock.Object);
+		string ?suggestedMessage = await conversationService.UpdateSelectedPropertiesAndGenerateSuggestedMessageAsync(
+			conversation,
+			selectedIris,
+			userSelections);
+		#endregion Act
+
+		#region Assert
+		Assert.NotNull(suggestedMessage);
+		Assert.Equal("Mock suggested message", suggestedMessage);
+		Assert.Equal(2, conversation.UserSelections.Count);
+
+		UserSelection? selection1 = conversation.UserSelections
+			.Find(s => s.SelectedPropertyIri == dtProperty1.Iri);
+		Assert.NotNull(selection1);
+		Assert.False(selection1.IsOptional);
+		Assert.Equal("{?var} = 0", selection1.FilterExpression);
+
+		UserSelection? selection2 = conversation.UserSelections
+			.Find(s => s.SelectedPropertyIri == dtProperty2.Iri);
+		Assert.NotNull(selection2);
+		Assert.True(selection2.IsOptional);
+		Assert.True(string.IsNullOrWhiteSpace(selection2.FilterExpression));
+		#endregion
+	}
+
+	/// <summary>
+	/// Conversation does not yet have any selected items.<br/>
+	/// User selects 2 items.<br/>
+	/// Result:<br/>
+	/// The conversation now contains the 2 items selected.
+	/// </summary>
+	[Fact]
+	public async Task UpdateSelectedPropertiesAndGenerateSuggestedMessageTestAsync_NoSelectedItemsYet()
+	{
+		#region Arrange
+		// Create a logger instance.
+		var logger = LoggerFactory.Create(builder =>
+		{
+			builder.AddConsole();
+			builder.SetMinimumLevel(LogLevel.Trace);
+		}).CreateLogger<ConversationService>();
+
+		var database = CreateInMemoryDb();
+
+		var llmConnectorMock = new Mock<ILlmConnector>();
+		llmConnectorMock
+			.Setup(llm => llm.GenerateSuggestedMessageAsync(
+								It.IsAny<DataSpecification>(),
+								It.IsAny<UserMessage>(),
+								It.IsAny<DataSpecificationSubstructure>(),
+								It.IsAny<List<DataSpecificationItem>>()))
+			.ReturnsAsync("Mock suggested message");
+
+		var sparqlTranslationServiceMock = new Mock<ISparqlTranslationService>();
+
+		var dataSpecification = new DataSpecification()
+		{
+			Id = 1,
+			DataspecerPackageUuid = "mock-uuid",
+			Name = "Mock data specification",
+			OwlContent = "Mock OWL value"
+		};
+		var conversation = new Conversation()
+		{
+			DataSpecification = dataSpecification,
+			Title = "Mock conversation"
+		};
+		conversation.AddMessage(new WelcomeMessage()
+		{
+			Conversation = conversation,
+			TextContent = "Mock welcome message",
+			Timestamp = DateTime.Now
+		});
+		conversation.AddMessage(new UserMessage()
+		{
+			Conversation = conversation,
+			TextContent = "Mock welcome message",
+			Timestamp = DateTime.Now
+		});
+
+		var classItem = new ClassItem()
+		{
+			Iri = "http://mock.com/class-items#mock",
+			Label = "Class item mock",
+			Type = ItemType.Class,
+			OwlAnnotation = string.Empty,
+			RdfsComment = string.Empty,
+			DataSpecificationId = 1,
+			DataSpecification = dataSpecification
+		};
+		var dtProperty1 = new DatatypePropertyItem()
+		{
+			Iri = "http://mock.com/datatype-properties#one",
+			Label = "Datatype property one",
+			Type = ItemType.ObjectProperty,
+			OwlAnnotation = string.Empty,
+			RdfsComment = string.Empty,
+			DomainIri = classItem.Iri,
+			Domain = classItem,
+			RangeDatatypeIri = "http://mock.com/simple-types#Literal",
+			DataSpecificationId = 1,
+			DataSpecification = dataSpecification
+		};
+		var dtProperty2 = new DatatypePropertyItem()
+		{
+			Iri = "http://mock.com/datatype-properties#two",
+			Label = "Datatype property two",
+			Type = ItemType.ObjectProperty,
+			OwlAnnotation = string.Empty,
+			RdfsComment = string.Empty,
+			DomainIri = classItem.Iri,
+			Domain = classItem,
+			RangeDatatypeIri = "http://mock.com/simple-types#Literal",
+			DataSpecificationId = 1,
+			DataSpecification = dataSpecification
+		};
+
+		await database.DataSpecifications.AddAsync(dataSpecification);
+		await database.Conversations.AddAsync(conversation);
+		await database.DataSpecificationItems.AddRangeAsync([classItem, dtProperty1, dtProperty2]);
+
+		HashSet<string> selectedIris = [dtProperty1.Iri, dtProperty2.Iri];
+		List<UserSelection> userSelections = [
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = dtProperty1.Iri,
+				FilterExpression = "{?var} = 0"
+			},
+			new UserSelection() {
+				Conversation = conversation,
+				ConversationId = conversation.Id,
+				SelectedPropertyIri = dtProperty2.Iri,
+				IsOptional = true
+			}
+		];
+		#endregion Arrange
+
+		#region Act
+		var conversationService = new ConversationService(
+			logger,
+			database,
+			llmConnectorMock.Object,
+			sparqlTranslationServiceMock.Object);
+		string? suggestedMessage = await conversationService.UpdateSelectedPropertiesAndGenerateSuggestedMessageAsync(
+			conversation,
+			selectedIris,
+			userSelections);
+		#endregion Act
+
+		#region Assert
+		Assert.NotNull(suggestedMessage);
+		Assert.Equal("Mock suggested message", suggestedMessage);
+		Assert.Equal(2, conversation.UserSelections.Count);
+
+		UserSelection? selection1 = conversation.UserSelections
+			.Find(s => s.SelectedPropertyIri == dtProperty1.Iri);
+		Assert.NotNull(selection1);
+		Assert.False(selection1.IsOptional);
+		Assert.Equal("{?var} = 0", selection1.FilterExpression);
+
+		UserSelection? selection2 = conversation.UserSelections
+			.Find(s => s.SelectedPropertyIri == dtProperty2.Iri);
+		Assert.NotNull(selection2);
+		Assert.True(selection2.IsOptional);
+		Assert.True(string.IsNullOrWhiteSpace(selection2.FilterExpression));
+		#endregion
 	}
 }

@@ -392,14 +392,14 @@ public class ConversationService(
 		HashSet<string> selectedPropertiesIri,
 		List<UserSelection> userSelections)
 	{
-		_logger.LogDebug("Searching for the selected items.");
+		// Get the selected properties from the database.
 		IEnumerable<PropertyItem> selectedProperties = await _database.DataSpecificationItems
 						.Where(item => item.DataSpecificationId == conversation.DataSpecification.Id
 														&& selectedPropertiesIri.Contains(item.Iri))
 						.Select(item => (PropertyItem)item)
 						.ToListAsync();
 
-		_logger.LogDebug("Searching for the most recent user message.");
+		// Get the most recent user message.
 		UserMessage? userMessage = null;
 		for (int i = conversation.Messages.Count - 1; i >= 0; i--)
 		{
@@ -416,7 +416,8 @@ public class ConversationService(
 			return null;
 		}
 
-		// To generate a suggested message, we need to pass all the selected properties
+		// To generate a suggested message,
+		// we need to pass all the selected properties
 		// and their domains and ranges to the LLM.
 		// So we need to get the domains and ranges.
 		List<DataSpecificationItem> itemsToAdd = [];
@@ -438,9 +439,12 @@ public class ConversationService(
 		}
 
 		string suggestedMessage = await _llmConnector.GenerateSuggestedMessageAsync(conversation.DataSpecification, userMessage, conversation.DataSpecificationSubstructure, itemsToAdd);
-		
+
 		// Remove all previous selections before adding the newly updated ones.
-		_database.UserSelections.RemoveRange(conversation.UserSelections);
+		var listOfSelection = conversation.UserSelections.ToList();
+		_database.UserSelections.RemoveRange(listOfSelection);
+		// If we do `_database.UserSelections.RemoveRange(conversation.UserSelections);`
+		// then it will throw an exception, because of EF Core. Not sure exactly.
 
 		await _database.UserSelections.AddRangeAsync(userSelections);
 		conversation.UserSelections = userSelections;
