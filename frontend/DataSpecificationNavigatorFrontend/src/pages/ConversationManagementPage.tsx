@@ -210,7 +210,7 @@ function ConversationManagementPage() {
 					<p>
 						Navigate to{" "}
 						<a
-							href={import.meta.env.VITE_DATASPECER_URL || "https://tool.dataspecer.com/"}
+							href={import.meta.env.VITE_DATASPECER_URL/* || "https://tool.dataspecer.com/"*/}
 							target="_blank"
 							className="text-blue-600 underline hover:text-blue-800"
 						>
