@@ -60,12 +60,14 @@ After building the images, run both the frontend and the backend.
 docker-compose up
 ```
 
-Access the frontend at `http://localhost:8080`.
+By default, the frontend is served at `http://localhost:8080`.
 
 The backend is running at `http://localhost:8080/backend-api`.
 
 You can try sending a GET requrest to `http://localhost:8080/backend-api/hello` to check that the backend is running.
 
-### Changing the application's port
+### Changing the base URL and port.
 
-If instead of the default port 8080, you want the app to run on a different port, set the APP_PORT value in the .env file to your desired port.
+You can change the base URL by setting the `BASE_URL` value in the .env file. For example, if you want the app to run at `http://localhost:8080/my/custom/path`, set `BASE_URL=/my/custom/path` in the .env file.
+
+Similarly, you can change the default port for the app by setting the `APP_PORT` value in the .env file.
