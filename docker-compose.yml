@@ -24,7 +24,11 @@ services:
     build:
       context: ./frontend/DataSpecificationNavigatorFrontend
       dockerfile: Dockerfile
+      args:
+      - BASE_PATH=${BASE_PATH:-/}
     ports:
       - "${APP_PORT:-8080}:80"
+    environment:
+      - BASE_PATH=${BASE_PATH:-/}
     depends_on:
       - backend # Not really, but it's meaningless to run the frontend without backend.
