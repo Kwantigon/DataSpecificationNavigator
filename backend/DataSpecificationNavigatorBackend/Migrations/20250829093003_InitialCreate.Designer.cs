@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataSpecificationNavigatorBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250827113910_InitialCreate")]
+    [Migration("20250829093003_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -253,30 +253,10 @@ namespace DataSpecificationNavigatorBackend.Migrations
                 {
                     b.HasBaseType("DataSpecificationNavigatorBackend.Model.Message");
 
-                    b.PrimitiveCollection<string>("MappedItemsIri")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("MappingText")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<Guid>("PrecedingUserMessageId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SparqlQuery")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SparqlText")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SuggestPropertiesText")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.PrimitiveCollection<string>("SuggestedPropertiesIri")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasIndex("PrecedingUserMessageId")
