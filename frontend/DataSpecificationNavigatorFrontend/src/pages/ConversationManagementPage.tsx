@@ -210,16 +210,16 @@ function ConversationManagementPage() {
 					<p>
 						Navigate to{" "}
 						<a
-							href={import.meta.env.VITE_DATASPECER_URL/* || "https://tool.dataspecer.com/"*/}
+							href={import.meta.env.VITE_DATASPECER_URL || "https://tool.dataspecer.com/"}
 							target="_blank"
 							className="text-blue-600 underline hover:text-blue-800"
 						>
 							Dataspecer
 						</a>{" "}
-						and select a package, then choose <span className="font-medium">“Ask in navigator”</span>.
+						and create a new package with data structures. Then use the created package's IRI to start a new conversation here.
 					</p>
 					<p>
-						Or click{" "}
+						Or if you already have a Dataspecer package, click{" "}
 						<Button variant="outline" size="sm" onClick={() => setIsNewConversationDialogManualCreationOpen(true)}>
 							Create new conversation
 						</Button>{" "}
@@ -321,7 +321,7 @@ function ConversationManagementPage() {
 						)}
 						<div className="grid grid-cols-4 items-center gap-4">
 							<Label htmlFor="dataspecerIRI" className="text-right">
-								Dataspecer package UUID
+								Dataspecer package IRI
 							</Label>
 							<div className="col-span-3 flex items-center gap-2">
 								<Input
@@ -338,7 +338,7 @@ function ConversationManagementPage() {
 											<Info className="text-gray-500 cursor-pointer" />
 										</TooltipTrigger>
 										<TooltipContent>
-											<p>Copy and paste the UUID of your Dataspecer package.</p>
+											<p>Copy and paste the IRI of your Dataspecer package.</p>
 										</TooltipContent>
 									</Tooltip>
 								</TooltipProvider>
