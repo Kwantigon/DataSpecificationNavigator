@@ -286,20 +286,16 @@ public class RdfProcessor(
 							itemInfo.Iri = subjectUri;
 							itemsMap.Add(itemInfo.Iri, itemInfo);
 						}
-
-						// Prefer comment in English.
-						if (literalNode.Language == "en")
+						// Append the comment to the existing one.
+						// This is mainly to preserve the information about
+						// cardinality of properties.
+						if (string.IsNullOrWhiteSpace(itemInfo.Comment))
 						{
-							// If in English, override anything already present.
 							itemInfo.Comment = literalNode.Value;
 						}
 						else
 						{
-							// Otherwise check if there is already a comment present.
-							if (itemInfo.Comment is null)
-							{
-								itemInfo.Comment = literalNode.Value;
-							}
+							itemInfo.Comment += "\n" + literalNode.Value;
 						}
 					}
 
@@ -324,7 +320,7 @@ public class RdfProcessor(
 						{
 							// Otherwise check if there is already an annotation present.
 							// (similar to labels)
-							if (itemInfo.AnnotationProperty is null)
+							if (string.IsNullOrWhiteSpace(itemInfo.AnnotationProperty))
 							{
 								itemInfo.AnnotationProperty = literalNode.Value;
 							}
