@@ -28,7 +28,7 @@
     <None Update="Prompts\Gemini\get_suggested_items.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Prompts\Gemini\summarize_data_specification_classes.txt">
+    <None Update="Prompts\Gemini\summarize_data_specification_items.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Prompts\Llama3.3-70b\generate_suggested_message.txt">
@@ -43,7 +43,7 @@
     <None Update="Prompts\Llama3.3-70b\map_to_substructure.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Prompts\Llama3.3-70b\summarize_data_specification_classes.txt">
+    <None Update="Prompts\Llama3.3-70b\summarize_data_specification_items.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Prompts\Llama3.3-70b\welcome_message_data_specification_summary.txt">

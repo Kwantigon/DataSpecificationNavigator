@@ -13,14 +13,40 @@ public class LlamaPromptConstructor : ILlmPromptConstructor
 	private readonly AppDbContext _database;
 	private readonly JsonSerializerOptions _jsonSerializerOptions;
 
+	/// <summary>
+	/// Has the following parameters:<br/>
+	/// {0} = Data specification (flat list of all items).<br/>
+	/// </summary>
 	private readonly string _dataSpecificationSummaryTemplate;
 
+	/// <summary>
+	/// Has the following parameters:<br/>
+	/// {0} = Data specification (flat list of all items).<br/>
+	/// {1} = User question.
+	/// </summary>
 	private readonly string _mapToDataSpecificationTemplate;
 
+	/// <summary>
+	/// Has the following parameters:<br/>
+	/// {0} = Data specification
+	/// (only the local area of the current substructure).<br/>
+	/// {1} = User question.<br/>
+	/// {2} = Current substructure (a list of items that the conversation has built).
 	private readonly string _getSuggestedPropertiesTemplate;
 
+	/// <summary>
+	/// Has the following parameters:<br/>
+	/// {0} = User question.<br/>
+	/// {1} = Current substructure (a list of items that the conversation has built).<br/>
+	/// {2} = Selected items (a list of items that the user has selected to add to their question).
+	/// </summary>
 	private readonly string _generateSuggestedMessageTemplate;
 
+	/// <summary>
+	/// Has the following parameters:<br/>
+	/// {0} = User question.<br/>
+	/// {1} = Current substructure (a list of items that the conversation has built).
+	/// </summary>
 	private readonly string _mapToSubstructureTemplate;
 
 	private readonly string _summarizeItemsTemplate;
