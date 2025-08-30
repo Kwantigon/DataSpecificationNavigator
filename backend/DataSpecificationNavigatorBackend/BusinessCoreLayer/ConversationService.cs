@@ -134,9 +134,9 @@ public class ConversationService(
 				conversation.DataSpecificationSubstructure = new DataSpecificationSubstructure();
 				List<DataSpecificationItem> itemsToAdd = mappings.Select(m => m.Item).ToList();
 
+				// Add missing domains and ranges.
 				// In the ideal case, 'itemsToAdd' contains mapped classes, properties, and all their domains and ranges.
 				// But since it is an output from the LLM, it might not be complete.
-				// Add missing domains and ranges.
 				List<DataSpecificationItemMapping> manuallyMapped = [];
 				foreach (PropertyItem property in itemsToAdd.OfType<PropertyItem>())
 				{

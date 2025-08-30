@@ -10,6 +10,7 @@ using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.LLama3._3_70b;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,12 +26,12 @@ builder.Services
 	.AddScoped<IDataSpecificationService, DataSpecificationService>()
 	.AddScoped<IDataSpecificationController, DataSpecificationController>()
 	.AddScoped<IDataspecerConnector, DataspecerConnector>()
-	/*.AddScoped<ILlmConnector, GeminiConnector>()
+	.AddScoped<ILlmConnector, GeminiConnector>()
 	.AddScoped<ILlmResponseProcessor, GeminiResponseProcessor>()
-	.AddScoped<ILlmPromptConstructor, GeminiPromptConstructor>()*/
-	.AddScoped<ILlmConnector, OllamaConnector>()
+	.AddScoped<ILlmPromptConstructor, GeminiPromptConstructor>()
+	/*.AddScoped<ILlmConnector, OllamaConnector>()
 	.AddScoped<ILlmPromptConstructor, LlamaPromptConstructor>()
-	.AddScoped<ILlmResponseProcessor, LlamaResponseProcessor>()
+	.AddScoped<ILlmResponseProcessor, LlamaResponseProcessor>()*/
 	.AddScoped<IRdfProcessor, RdfProcessor>()
 	.AddScoped<ISparqlTranslationService, SparqlTranslationService>()
 	;
@@ -45,14 +46,16 @@ builder.Services.AddCors(options =>
 			.SetIsOriginAllowed(origin => true);
 	});
 });
-/*builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(c =>
 {
-	c.SwaggerDoc("v1", new OpenApiInfo {
-		Title = "Data specification helper API",
-		Description = "The back end for the data specification helper project.",
-		Version = "v1" }
+	c.SwaggerDoc("v1", new OpenApiInfo
+	{
+		Title = "Data specification navigator API",
+		Description = "The back end for the data specification navigator project.",
+		Version = "v1"
+	}
 	);
-});*/
+});
 
 var connectionString = builder.Configuration
 	.GetConnectionString("Sqlite") ?? "Data Source=/app/data/DataSpecificationNavigatorDB.db";
@@ -70,14 +73,14 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors();
-/*if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
 	app.UseSwaggerUI(c =>
 	{
-		c.SwaggerEndpoint("/swagger/v1/swagger.json", "Data specification helper API");
+		c.SwaggerEndpoint("/swagger/v1/swagger.json", "Data specification navigator API");
 	});
-}*/
+}
 
 // Sanity check. Also check the environment variables.
 app.MapGet("/hello", (IConfiguration config) =>
