@@ -19,6 +19,7 @@ services:
       - "Env:Llm:Ollama:Uri=${OLLAMA_URI}"
       - "Env:Llm:Ollama:Model=${OLLAMA_MODEL}"
       - "Env:Llm:Ollama:RetryAttempts=${RETRY_ATTEMPTS}"
+      - "Env:Dataspecer:Url=${DATASPECER_URL}"
 
   frontend:
     build:

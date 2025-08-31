@@ -15,16 +15,17 @@ public class DataspecerConnector : IDataspecerConnector
 	{
 		_httpClient = new HttpClient();
 		_logger = logger;
-		string? downloadDocsEndpoint = config["Env:Dataspecer:Endpoints:DownloadDocumentation"];
-		if (string.IsNullOrWhiteSpace(downloadDocsEndpoint))
+		string? dataspecerUrl = config["Env:Dataspecer:Url"];
+		if (string.IsNullOrWhiteSpace(dataspecerUrl))
 		{
-			downloadDocsEndpoint = config["Dataspecer:Endpoints:DownloadDocumentation"];
-			if (string.IsNullOrWhiteSpace(downloadDocsEndpoint))
+			dataspecerUrl = config["Dataspecer:Url"];
+			if (string.IsNullOrWhiteSpace(dataspecerUrl))
 			{
 				throw new Exception("The dataspecer URL is missing from configuration.");
 			}
 		}
-		_dataspecerDownloadDocumentationEndpoint = downloadDocsEndpoint;
+		_dataspecerDownloadDocumentationEndpoint =
+			dataspecerUrl.TrimEnd('/') + "/api/experimental/output.zip?iri=";
 	}
 
 	public async Task<string?> ExportDsvFileFromPackageAsync(string packageIri)

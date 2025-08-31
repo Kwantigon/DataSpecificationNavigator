@@ -116,6 +116,18 @@ app.MapGet("/hello", (IConfiguration config) =>
 	}
 	#endregion Ollama configuration
 
+	#region Dataspecer connector configuration
+	string? dataspecerEndpoint = config["Env:Dataspecer:Url"];
+	if (string.IsNullOrWhiteSpace(dataspecerEndpoint))
+	{
+		dataspecerEndpoint = config["Dataspecer:Url"];
+		if (string.IsNullOrWhiteSpace(dataspecerEndpoint))
+		{
+			dataspecerEndpoint = "MISSING";
+		}
+	}
+	#endregion
+
 	return Results.Ok(new
 	{
 		Message = "Hello from Data specification navigator backend!",
@@ -123,7 +135,8 @@ app.MapGet("/hello", (IConfiguration config) =>
 		{
 			Uri = ollamaUri,
 			Model = ollamaModel,
-			RetryAttempts = retryAttempts
+			RetryAttempts = retryAttempts,
+			DataspecerUrl = dataspecerEndpoint
 		}
 	});
 });

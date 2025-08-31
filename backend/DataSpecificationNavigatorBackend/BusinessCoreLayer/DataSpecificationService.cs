@@ -96,10 +96,7 @@ public class DataSpecificationService(
 				// Failed to retrieve the label during DSV to OWL conversion.
 				// Use the iri as label (but only the fragment part).
 				_logger.LogWarning("Class item from OWL graph has no label. Using IRI fragment as label.");
-				string iriFragment = new Uri(clazz.Iri).Fragment.Substring(1); // The first character is '#' so I don't want that.
-				iriFragment = Uri.UnescapeDataString(iriFragment);
-				iriFragment.Replace('-', ' ');
-				clazz.Label = iriFragment;
+				clazz.Label = GetLabelFromIri(clazz.Iri);
 			}
 
 			if (classItemsMap.ContainsKey(clazz.Iri))
@@ -137,10 +134,7 @@ public class DataSpecificationService(
 				// Failed to retrieve the label during DSV to OWL conversion.
 				// Use the iri as label (but only the fragment part).
 				_logger.LogWarning("Property item from OWL graph has no label. Using IRI fragment as label.");
-				string iriFragment = new Uri(property.Iri).Fragment.Substring(1); // The first character is '#' so I don't want that.
-				iriFragment = Uri.UnescapeDataString(iriFragment);
-				iriFragment.Replace('-', ' ');
-				property.Label = iriFragment;
+				property.Label = GetLabelFromIri(property.Iri);
 			}
 
 			if (property.DomainIri is null || property.RangeIri is null)
@@ -217,6 +211,28 @@ public class DataSpecificationService(
 		return await _database.DataSpecificationItems
 					.Where(item => item.DataSpecificationId == dataSpecificationId && itemIriList.Contains(item.Iri))
 					.ToListAsync();
+	}
+
+	private string GetLabelFromIri(string iri)
+	{
+		int slashOrHastagIndex = -1;
+		for (int i = iri.Length - 1; i >= 0; i--)
+		{
+			if (iri[i] == '/' || iri[i] == '#')
+			{
+				slashOrHastagIndex = i;
+				break;
+			}
+		}
+		if (slashOrHastagIndex == -1)
+		{
+			return "LabelCouldNotBeExtracted";
+		}
+
+		string iriFragment = iri.Substring(slashOrHastagIndex + 1);
+		iriFragment = Uri.UnescapeDataString(iriFragment);
+		string label = iriFragment.Replace('-', ' ');
+		return label;
 	}
 }
 
