@@ -103,12 +103,44 @@ public class SparqlTranslationService(
 		}
 		// If no roots were found, add the first node as a root.
 		// This happens in case of existing cycles.
+
+		HashSet<QueryNode> visited = [];
 		if (graph.Roots.Count == 0 && nodeMap.Count > 0)
 		{
-			graph.Roots.Add(nodeMap.Values.First());
+			GetRoots(graph);
+			//graph.Roots.Add(nodeMap.Values.First());
 		}
 
 		return graph;
+	}
+
+	private void GetRoots(QueryGraph graph)
+	{
+		List<QueryNode> nodes = graph.Nodes.ToList();
+		HashSet<QueryNode> visited = [];
+		while (visited.Count < nodes.Count)
+		{
+			QueryNode? node = nodes.Find(n => !visited.Contains(n));
+			if (node == null)
+			{
+				break;
+			}
+			graph.Roots.Add(node);
+			TraverseFromNode(node, visited);
+		}
+	}
+	private void TraverseFromNode(QueryNode node, HashSet<QueryNode> visited)
+	{
+		if (visited.Contains(node))
+		{
+			return;
+		}
+
+		visited.Add(node);
+		foreach (QueryEdge edge in node.OutgoingEdges)
+		{
+			TraverseFromNode(edge.Target, visited);
+		}
 	}
 
 	private string GenerateSparqlQuery(QueryGraph graph)
