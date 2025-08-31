@@ -11,6 +11,14 @@ namespace DataSpecificationNavigator.Tests.BusinessCoreLayer;
 
 public class DataSpecificationServiceTests
 {
+	private AppDbContext CreateInMemoryDb()
+	{
+		var dbOptions = new DbContextOptionsBuilder<AppDbContext>()
+				.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+				.Options;
+		return new AppDbContext(dbOptions);
+	}
+
 	[Fact]
 	public async Task ExportDataSpecificationFromDataspecerTestAsync_ExpectsFourItems()
 	{
@@ -106,11 +114,7 @@ public class DataSpecificationServiceTests
 			.CreateLogger<RdfProcessor>()
 		);
 
-		// Use in-memory database.
-		var dbOptions = new DbContextOptionsBuilder<AppDbContext>()
-				.UseInMemoryDatabase(databaseName: "TestDb")
-				.Options;
-		var appDbContext = new AppDbContext(dbOptions);
+		var database = CreateInMemoryDb();
 
 		// Create a logger instance.
 		var logger = LoggerFactory.Create(builder =>
@@ -124,7 +128,7 @@ public class DataSpecificationServiceTests
 			logger,
 			mockDataspecerConnector.Object,
 			rdfProcessor,
-			appDbContext);
+			database);
 		#endregion Arrange
 
 		#region Act
@@ -140,10 +144,10 @@ public class DataSpecificationServiceTests
 
 		// Check if the items were correctly extracted.
 
-		var classItems = await appDbContext.ClassItems.ToListAsync();
+		var classItems = await database.ClassItems.ToListAsync();
 		Assert.Equal(2, classItems.Count);
 
-		var objectProperties = await appDbContext.ObjectPropertyItems.ToListAsync();
+		var objectProperties = await database.ObjectPropertyItems.ToListAsync();
 		Assert.Single(objectProperties);
 		ObjectPropertyItem objectProperty = objectProperties.First();
 		Assert.Equal(dataSpecification.Id, objectProperty.DataSpecificationId);
@@ -160,7 +164,7 @@ public class DataSpecificationServiceTests
 		Assert.False(string.IsNullOrWhiteSpace(range.Iri));
 		Assert.False(string.IsNullOrWhiteSpace(range.Label));
 
-		var datatypeProperties = await appDbContext.DatatypePropertyItems.ToListAsync();
+		var datatypeProperties = await database.DatatypePropertyItems.ToListAsync();
 		Assert.Single(datatypeProperties);
 		DatatypePropertyItem datatypeProperty = datatypeProperties.First();
 		Assert.False(string.IsNullOrWhiteSpace(datatypeProperty.Iri));

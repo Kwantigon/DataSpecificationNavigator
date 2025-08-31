@@ -632,11 +632,11 @@ function ConversationPage() {
 								handleSendUserMessage();
 							}
 						}}
-						disabled={isSendingUserMessage}
+						disabled={isSendingUserMessage || isFetchingSuggestedMessage}
 					/>
 					<Button
 						onClick={handleSendUserMessage}
-						disabled={isSendingUserMessage}
+						disabled={isSendingUserMessage || isFetchingSuggestedMessage}
 						className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 flex items-center justify-center 
     										shadow-md transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
 					>

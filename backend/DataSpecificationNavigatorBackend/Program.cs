@@ -10,6 +10,7 @@ using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.Gemini;
 using DataSpecificationNavigatorBackend.ConnectorsLayer.LlmConnectors.LLama3._3_70b;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,14 +46,16 @@ builder.Services.AddCors(options =>
 			.SetIsOriginAllowed(origin => true);
 	});
 });
-/*builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(c =>
 {
-	c.SwaggerDoc("v1", new OpenApiInfo {
-		Title = "Data specification helper API",
-		Description = "The back end for the data specification helper project.",
-		Version = "v1" }
+	c.SwaggerDoc("v1", new OpenApiInfo
+	{
+		Title = "Data specification navigator API",
+		Description = "The back end for the data specification navigator project.",
+		Version = "v1"
+	}
 	);
-});*/
+});
 
 var connectionString = builder.Configuration
 	.GetConnectionString("Sqlite") ?? "Data Source=/app/data/DataSpecificationNavigatorDB.db";
@@ -70,14 +73,14 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors();
-/*if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
 	app.UseSwaggerUI(c =>
 	{
-		c.SwaggerEndpoint("/swagger/v1/swagger.json", "Data specification helper API");
+		c.SwaggerEndpoint("/swagger/v1/swagger.json", "Data specification navigator API");
 	});
-}*/
+}
 
 // Sanity check. Also check the environment variables.
 app.MapGet("/hello", (IConfiguration config) =>
@@ -113,6 +116,18 @@ app.MapGet("/hello", (IConfiguration config) =>
 	}
 	#endregion Ollama configuration
 
+	#region Dataspecer connector configuration
+	string? dataspecerEndpoint = config["Env:Dataspecer:Url"];
+	if (string.IsNullOrWhiteSpace(dataspecerEndpoint))
+	{
+		dataspecerEndpoint = config["Dataspecer:Url"];
+		if (string.IsNullOrWhiteSpace(dataspecerEndpoint))
+		{
+			dataspecerEndpoint = "MISSING";
+		}
+	}
+	#endregion
+
 	return Results.Ok(new
 	{
 		Message = "Hello from Data specification navigator backend!",
@@ -120,7 +135,8 @@ app.MapGet("/hello", (IConfiguration config) =>
 		{
 			Uri = ollamaUri,
 			Model = ollamaModel,
-			RetryAttempts = retryAttempts
+			RetryAttempts = retryAttempts,
+			DataspecerUrl = dataspecerEndpoint
 		}
 	});
 });

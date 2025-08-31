@@ -3,14 +3,30 @@ using System.IO.Compression;
 
 namespace DataSpecificationNavigatorBackend.ConnectorsLayer;
 
-public class DataspecerConnector(
-	ILogger<DataspecerConnector> logger) : IDataspecerConnector
+public class DataspecerConnector : IDataspecerConnector
 {
-	//private const string DATASPECER_JSONLD_ENDPOINT = "https://tool.dataspecer.com/api/preview/context.jsonld?iri=";
-	private const string DATASPECER_DOWNLOAD_DOCUMENTATION_ENDPOINT = "https://tool.dataspecer.com/api/experimental/output.zip?iri=";
+	private readonly HttpClient _httpClient;
+	private readonly ILogger<DataspecerConnector> _logger;
+	private readonly string _dataspecerDownloadDocumentationEndpoint;
 
-	private readonly HttpClient _httpClient = new HttpClient();
-	private readonly ILogger<DataspecerConnector> _logger = logger;
+	public DataspecerConnector(
+	ILogger<DataspecerConnector> logger,
+	IConfiguration config)
+	{
+		_httpClient = new HttpClient();
+		_logger = logger;
+		string? dataspecerUrl = config["Env:Dataspecer:Url"];
+		if (string.IsNullOrWhiteSpace(dataspecerUrl))
+		{
+			dataspecerUrl = config["Dataspecer:Url"];
+			if (string.IsNullOrWhiteSpace(dataspecerUrl))
+			{
+				throw new Exception("The dataspecer URL is missing from configuration.");
+			}
+		}
+		_dataspecerDownloadDocumentationEndpoint =
+			dataspecerUrl.TrimEnd('/') + "/api/experimental/output.zip?iri=";
+	}
 
 	public async Task<string?> ExportDsvFileFromPackageAsync(string packageIri)
 	{
@@ -26,7 +42,7 @@ public class DataspecerConnector(
 
 	private async Task<string?> ExportFileFromPackage(string packageIri, string filePath)
 	{
-		string uri = DATASPECER_DOWNLOAD_DOCUMENTATION_ENDPOINT + packageIri;
+		string uri = _dataspecerDownloadDocumentationEndpoint + packageIri;
 		HttpResponseMessage response = await _httpClient.GetAsync(uri);
 		if (!response.IsSuccessStatusCode)
 		{

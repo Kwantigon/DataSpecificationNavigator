@@ -1,0 +1,387 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Data specification navigator API",
+    "description": "The back end for the data specification navigator project.",
+    "version": "v1"
+  },
+  "paths": {
+    "/hello": {
+      "get": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/conversations": {
+      "get": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Get all ongoing conversations.",
+        "description": "Frontend calls this to display all conversations in the conversations management tab.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Start a new conversation.",
+        "description": "Starts a new conversation with the given title and using the given data specification in the payload.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostConversationsDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{conversationId}": {
+      "get": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Get information about the conversation.",
+        "description": "This endpoint is only for debugging. The frontend does not need to call this for anything.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Delete a conversation.",
+        "description": "Deletes the conversation, all messages and the associated data specification.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{conversationId}/messages": {
+      "get": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Get all messages in the conversation.",
+        "description": "Returns all messages ordered by their timestamps. The frontend calls this when it loads a conversation and needs to display messages in the conversation.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Add a message to the conversation.",
+        "description": "Add a new user message to the conversation and generate a reply to that message.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostConversationMessagesDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "get": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Get the concrete message from a conversation.",
+        "description": "The frontend calls this to get the reply to an user's message.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{conversationId}/data-specification-substructure": {
+      "get": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Get the data specification substructure that is being built in the conversation.",
+        "description": "The frontend calls this endpoint to display all the mapped classes and properties to the user.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{conversationId}/user-selected-items": {
+      "put": {
+        "tags": [
+          "DataSpecificationNavigatorBackend"
+        ],
+        "summary": "Save user selection and generate suggested message.",
+        "description": "Saves the suggested properties selected by the user and generate a suggested message based on that selection. Returns the generated suggested message.",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutUserSelectedItemsDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PostConversationMessagesDTO": {
+        "type": "object",
+        "properties": {
+          "textValue": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostConversationsDTO": {
+        "type": "object",
+        "properties": {
+          "conversationTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataspecerPackageUuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataspecerPackageName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PutUserSelectedItemsDTO": {
+        "type": "object",
+        "properties": {
+          "userSelections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSelectionDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserSelectionDTO": {
+        "type": "object",
+        "properties": {
+          "propertyIri": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOptional": {
+            "type": "boolean"
+          },
+          "filterExpression": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Void": {
+        "type": "object",
+        "additionalProperties": false
+      }
+    }
+  }
+}
