@@ -1,8 +1,11 @@
 # Data specification navigator
 
-The Data specification navigator is a tool that works with Dataspecer packages and allows you to ask questions about your data specification in plain English and, in return, provides you with the correct technical query (SPARQL) to get the data you need. To use a Dataspecer package for this tool, the package must contain a DSV file or an OWL file.
+The Data specification navigator is a tool that works with Dataspecer packages and allows you to ask questions about your data specification in plain English and, in return, provides you with the correct technical query (SPARQL) to get the data you need. This tool was created as a fulfilment of a research project at MatFyz. All relevant documentation is in the `documentation` directory.
 
-This tool was created as a fulfilment of a research project at MatFyz. All relevant documentation is in the `documentation` directory.
+To use a Dataspecer package in this tool, the package must contain a DSV file or an OWL file. Those are the packages with defined data structures. Examples of such packages are:
+- [Tourist destination](https://tool.dataspecer.com/data-specification-editor/specification?dataSpecificationIri=8f9bf46c-4678-4f90-b10f-709ce7dc417e)
+- [Vehicle](https://tool.dataspecer.com/data-specification-editor/specification?dataSpecificationIri=472cfa32-52bb-4451-bcfc-d6f379618302)
+- [Electronic signatures](https://tool.dataspecer.com/data-specification-editor/specification?dataSpecificationIri=ca85277a-8a2b-4874-bc7a-13bd48fe798a)
 
 ## Prerequisites
 
