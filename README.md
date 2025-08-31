@@ -2,10 +2,13 @@
 
 The Data Specification Navigator is a conversational tool designed to help you interact with your data specification. It allows you to ask questions about your data specification in plain English and, in return, provides you with the correct technical query (SPARQL) to get the data you need.
 
+This tool was created as a fulfilment of a research project at MatFyz. All relevant documentation is in the `documentation` directory.
+
 ## Prerequisites
 
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
+- [Ollama](https://ollama.com/) or a Gemini API Key.
 
 ## Installation
 
