@@ -1,6 +1,6 @@
 # Data specification navigator
 
-The Data Specification Navigator is a conversational tool designed to help you interact with your data specification. It allows you to ask questions about your data specification in plain English and, in return, provides you with the correct technical query (SPARQL) to get the data you need.
+The Data specification navigator is a tool that works with Dataspecer packages and allows you to ask questions about your data specification in plain English and, in return, provides you with the correct technical query (SPARQL) to get the data you need. To use a Dataspecer package for this tool, the package must contain a DSV file or an OWL file.
 
 This tool was created as a fulfilment of a research project at MatFyz. All relevant documentation is in the `documentation` directory.
 
