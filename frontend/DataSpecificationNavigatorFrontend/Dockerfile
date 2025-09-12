@@ -9,8 +9,8 @@ RUN npm install
 # Copy the rest of the application files.
 COPY . .
 
-ARG BASE_URL=/
-ENV VITE_BASE_URL=$BASE_URL
+ARG VITE_BASE_URL=/
+ARG VITE_BACKEND_API_URL=/backend-api
 
 # Build the project for production.
 RUN npm run build

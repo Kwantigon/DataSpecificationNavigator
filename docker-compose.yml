@@ -8,7 +8,7 @@ services:
     volumes:
       # Map the host ./backend_data to /app/data in the container.
       # That's where the SQLITE file is.
-      - ./backend_data:/app/data
+      - ./data:/app/data
     extra_hosts:
       # Apparently, on Linux, the host.docker.internal is not automatically mapped.
       # So map it to the host IP address here.
@@ -24,10 +24,9 @@ services:
       context: ./frontend/DataSpecificationNavigatorFrontend
       dockerfile: Dockerfile
       args:
-      - BASE_URL=${BASE_URL:-/}
+      - VITE_BASE_URL=${BASE_URL:-/}
+      - VITE_BACKEND_API_URL=${BASE_URL:-/}backend-api
     ports:
       - "${APP_PORT:-8080}:80"
-    environment:
-      - VITE_BASE_URL=${BASE_URL:-/}
     depends_on:
       - backend # Not really, but it's meaningless to run the frontend without backend.

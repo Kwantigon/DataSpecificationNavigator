@@ -5,7 +5,7 @@ import ConversationManagementPage from "@/pages/ConversationManagementPage";
 import AboutPage from "./pages/AboutPage";
 
 function App() {
-	const baseUrl = import.meta.env.BASE_URL || "/";
+	const baseUrl = import.meta.env.VITE_BASE_URL ?? "/";
 	console.log("Base URL: " + baseUrl);
 
 	return (
